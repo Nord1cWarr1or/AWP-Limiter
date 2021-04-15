@@ -21,7 +21,7 @@ stock dummyFunc(cell) {
 const MAX_MAPNAME_LENGTH = 64;
 #endif
 
-const Float:CHECK_ONLINE_FREQ = 1.0;
+const Float:CHECK_ONLINE_FREQ = 60.0;
 const TASKID__CHECK_ONLINE = 10200;
 
 enum _:Cvars
