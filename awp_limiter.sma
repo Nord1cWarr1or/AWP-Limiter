@@ -94,7 +94,7 @@ public plugin_init()
         new szMapName[MAX_MAPNAME_LENGTH];
         rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
 
-        debug_log(__LINE__, "Plugin initializated. Map: %s", szMapName);
+        debug_log(__LINE__, "Plugin initializated. Map: %s.", szMapName);
     }
 
     /* <====> */
@@ -106,6 +106,8 @@ public OnConfigsExecuted()
     {
         DisableHookChain(g_iHookChainRoundEnd);
         set_task_ex(CHECK_ONLINE_FREQ, "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+
+        debug_log(__LINE__, "Infinite round. Task for check online started.");
     }
 
     register_cvar("AWPLimiter_version", PLUGIN_VERSION, FCVAR_SERVER|FCVAR_SPONLY|FCVAR_UNLOGGED);
@@ -115,6 +117,8 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const pPlayer, const item)
 {
     if(get_member(item, m_iId) != WEAPON_AWP)
         return HC_CONTINUE;
+
+    debug_log(__LINE__, "CanHavePlayerItem called.");
 
     if(g_bIsLowOnline)
     {
@@ -136,6 +140,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const pPlayer, ItemID:item, ItemRestTy
 {
     if(item != ITEM_AWP)
         return HC_CONTINUE;
+
+    debug_log(__LINE__, "HasRestrictItem called. Type: %i.", type);
 
     switch(type)
     {
@@ -226,6 +232,8 @@ public RG_CBasePlayer_AddPlayerItem_post(const pPlayer, const pItem)
     if(get_member(pItem, m_iId) != WEAPON_AWP || g_bIsLowOnline)
         return;
 
+    debug_log(__LINE__, "AddPlayerItem called.");
+
     g_iAWPAmount[get_member(pPlayer, m_iTeam)]++;
 }
 
@@ -233,6 +241,8 @@ public RG_CBasePlayer_Killed_pre(const pPlayer, pevAttacker, iGib)
 {
     if(!is_user_has_awp(pPlayer) || g_bIsLowOnline)
         return;
+
+    debug_log(__LINE__, "Player <%n> died with AWP.", pPlayer);
 
     g_iAWPAmount[get_member(pPlayer, m_iTeam)]--;
 }
@@ -242,12 +252,16 @@ public RH_SV_DropClient_pre(const pPlayer, bool:crash, const fmt[])
     if(!is_user_connected(pPlayer) || !is_user_has_awp(pPlayer))
         return;
 
+    debug_log(__LINE__, "Player <%n> leaved from server with AWP.", pPlayer);
+
     g_iAWPAmount[get_member(pPlayer, m_iTeam)]--;
 }
 
 public RG_RestartRound_post()
 {
     arrayset(g_iAWPAmount[TEAM_UNASSIGNED], 0, sizeof g_iAWPAmount);
+
+    debug_log(__LINE__, "New round started.");
 
     if(g_bIsLowOnline)
         return;
@@ -264,6 +278,8 @@ public RG_RestartRound_post()
 public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
     CheckOnline();
+
+    debug_log(__LINE__, "Round ended.");
 }
 
 public CheckOnline()
@@ -272,6 +288,14 @@ public CheckOnline()
     new iNumTE = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
 
     new iOnlinePlayers = iNumCT + iNumTE;
+
+    debug_log(__LINE__, "CheckOnline called. Online players: %i", iOnlinePlayers);
+
+    switch(g_pCvarValue[LIMIT_TYPE])
+    {
+        case 1: debug_log(__LINE__, "Limit type: 1. Min players: %i", g_pCvarValue[MIN_PLAYERS]);
+        case 2: debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated percent: %i", g_pCvarValue[PERCENT_PLAYERS], floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor));
+    }
 
     if(iOnlinePlayers < (g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MIN_PLAYERS] : floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor)))
     {
@@ -358,6 +382,8 @@ CreateCvars()
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
 {
+    debug_log(__LINE__, "Cvar RoundInfinite changed. Old: %s. New: %s", szOldValue, szNewValue);
+
     if(str_to_num(szNewValue))
     {
         DisableHookChain(g_iHookChainRoundEnd);
@@ -388,6 +414,9 @@ CheckMap()
 
 debug_log(const iLine, const szText[], any:...)
 {
+    if(!g_bIsDebugActive)
+        return;
+
     static szLogText[512];
     vformat(szLogText, charsmax(szLogText), szText, 3);
     
