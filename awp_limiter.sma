@@ -4,7 +4,7 @@
 
 new const PLUGIN_VERSION[] = "0.0.10";
 
-#pragma semicolon 1
+// #pragma semicolon 1
 
 #define FOREACHPLAYER(%0,%1,%2) new __players[MAX_PLAYERS], %0, %1; \
     dummyFunc(%1); \
@@ -45,6 +45,13 @@ new g_iAWPAmount[TeamName];
 new g_pCvarRoundInfinite;
 new HookChain:g_iHookChainRoundEnd;
 
+/* <== DEBUG ==> */
+
+new bool:g_bIsDebugActive;
+new g_szLogPach[MAX_RESOURCE_PATH_LENGTH];
+
+/* <====> */
+
 public plugin_init()
 {
     register_plugin("AWP Limiter", PLUGIN_VERSION, "Nordic Warrior");
@@ -64,6 +71,33 @@ public plugin_init()
     CreateCvars();
 
     AutoExecConfig();
+
+    /* <== DEBUG ==> */
+
+    g_bIsDebugActive = bool:(plugin_flags() & AMX_FLAG_DEBUG);
+
+    if(g_bIsDebugActive)
+    {
+        new szLogsDir[MAX_RESOURCE_PATH_LENGTH];
+        get_localinfo("amxx_logs", szLogsDir, charsmax(szLogsDir));
+
+        add(szLogsDir, charsmax(szLogsDir), "/awpl_debug");
+
+        if(!dir_exists(szLogsDir))
+            mkdir(szLogsDir);
+
+        new iYear, iMonth, iDay;
+        date(iYear, iMonth, iDay);
+
+        formatex(g_szLogPach, charsmax(g_szLogPach), "%s/awpl__%i-%02i-%02i.log", szLogsDir, iYear, iMonth, iDay);
+
+        new szMapName[MAX_MAPNAME_LENGTH];
+        rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
+
+        debug_log(__LINE__, "Plugin initializated. Map: %s", szMapName);
+    }
+
+    /* <====> */
 }
 
 public OnConfigsExecuted()
@@ -349,3 +383,17 @@ CheckMap()
 
     return PLUGIN_HANDLED;
 }
+
+/* <== DEBUG ==> */
+
+debug_log(const iLine, const szText[], any:...)
+{
+    static szLogText[512];
+    vformat(szLogText, charsmax(szLogText), szText, 3);
+    
+    format(szLogText, charsmax(szLogText), "[AWPL DEBUG] %s | LINE: %i", szLogText, iLine);
+
+    log_to_file(g_szLogPach, szLogText);
+}
+
+/* <====> */
