@@ -65,6 +65,7 @@ public plugin_init()
     RegisterHookChain(RH_SV_DropClient, "RH_SV_DropClient_pre", .post = false);
     RegisterHookChain(RG_CSGameRules_RestartRound, "RG_RestartRound_post", .post = true);
     g_iHookChainRoundEnd = RegisterHookChain(RG_RoundEnd, "RG_RoundEnd_post", .post = true);
+    RegisterHookChain(RG_CBasePlayer_DropPlayerItem, "RG_CBasePlayer_DropPlayerItem_post", .post = true);
 
     CreateCvars();
 
@@ -278,6 +279,18 @@ public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmD
     CheckOnline();
 
     debug_log(__LINE__, "Round ended.");
+}
+
+public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
+{
+    new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
+    
+    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP || g_bIsLowOnline)
+        return;
+
+    debug_log(__LINE__, "DropPlayerItem called.");
+
+    g_iAWPAmount[get_member(id, m_iTeam)]--;
 }
 
 public CheckOnline()
