@@ -28,7 +28,6 @@ enum _:Cvars
     MAX_AWP,
     LIMIT_TYPE,
     PERCENT_PLAYERS,
-    IMMUNITY,
     IMMNUNITY_FLAG[2],
     IMMUNITY_TYPE[3],
     BOTS,
@@ -40,8 +39,10 @@ new g_pCvarValue[Cvars];
 
 new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
-new g_pCvarRoundInfinite;
+new g_pCvarAwpRoundInfinite;
+new g_pCvarImmunity;
 new HookChain:g_iHookChainRoundEnd;
+new g_bitImmunityFlags;
 
 /* <== DEBUG ==> */
 
@@ -109,6 +110,8 @@ public OnConfigsExecuted()
         debug_log(__LINE__, "Infinite round. Task for check online started.");
     }
 
+    g_bitImmunityFlags = read_flags(g_pCvarValue[IMMNUNITY_FLAG]);
+
     register_cvar("AWPLimiter_version", PLUGIN_VERSION, FCVAR_SERVER|FCVAR_SPONLY|FCVAR_UNLOGGED);
 }
 
@@ -118,6 +121,9 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         return HC_CONTINUE;
 
     debug_log(__LINE__, "<CanHavePlayerItem> called.");
+
+    if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
+        return HC_CONTINUE;
 
     if(g_bIsLowOnline)
     {
@@ -141,6 +147,9 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         return HC_CONTINUE;
 
     debug_log(__LINE__, "<HasRestrictItem> called. Type: %i.", type);
+
+    if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
+        return HC_CONTINUE;
 
     switch(type)
     {
@@ -344,24 +353,18 @@ CreateCvars()
         .has_min = true, .min_val = 1.0),
     g_pCvarValue[MAX_AWP]);
 
-    bind_pcvar_num(create_cvar("awpl_limit_type", "2", 
+    bind_pcvar_num(create_cvar("awpl_limit_type", "2",
         .description = "Тип лимита AWP.^n1 - Точное кол-во AWP на команду^n2 - Процент от онлайн игроков (awpl_percent_players)",
         .has_min = true, .min_val = 1.0,
         .has_max = true, .max_val = 2.0),
     g_pCvarValue[LIMIT_TYPE]);
 
-    bind_pcvar_num(create_cvar("awpl_percent_players", "10", 
+    bind_pcvar_num(create_cvar("awpl_percent_players", "10",                                
         .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% - при онлайне 20 чел. доступно 2 AWP на команду"),
     g_pCvarValue[PERCENT_PLAYERS]);
 
-    bind_pcvar_num(create_cvar("awpl_immunity", "0", 
-        .description = "Иммунитет по флагу от ограничения AWP^n0 - Выключен^n1 - Включен",
-        .has_min = true, .min_val = 0.0,
-        .has_max = true, .max_val = 1.0),
-    g_pCvarValue[IMMUNITY]);
-
-    bind_pcvar_string(create_cvar("awpl_immunity_flag", "a",
-        .description = "Флаг иммунитета"),
+    bind_pcvar_string(g_pCvarImmunity = create_cvar("awpl_immunity_flag", "a",                                // +
+        .description = "Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета"),
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
 
     bind_pcvar_string(create_cvar("awpl_immunity_type", "abc",
@@ -380,20 +383,21 @@ CreateCvars()
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
-    bind_pcvar_num(g_pCvarRoundInfinite = create_cvar("awpl_round_infinite", "0",           // +
+    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",           // +
         .description = "Поддержка бесконечного раунда. (CSDM)^n0 - Выключено^n1 - Включено",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[ROUND_INFINITE]);
 
-    hook_cvar_change(g_pCvarRoundInfinite, "OnChangeCvar_RoundInfinite");
+    hook_cvar_change(g_pCvarAwpRoundInfinite, "OnChangeCvar_RoundInfinite");
+    hook_cvar_change(g_pCvarImmunity, "OnChangeCvar_Immunity");
 
     // проверить все квары
 }
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
 {
-    debug_log(__LINE__, "Cvar RoundInfinite changed. Old: %s. New: %s", szOldValue, szNewValue);
+    debug_log(__LINE__, "Cvar <awpl_round_infinite> changed. Old: %s. New: %s", szOldValue, szNewValue);
 
     if(str_to_num(szNewValue))
     {
@@ -405,6 +409,13 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
         EnableHookChain(g_iHookChainRoundEnd);
         remove_task(TASKID__CHECK_ONLINE);
     }
+}
+
+public OnChangeCvar_Immunity(pCvar, const szOldValue[], const szNewValue[])
+{
+    debug_log(__LINE__, "Cvar <awpl_immunity_flag> changed. Old: %s. New: %s", szOldValue, szNewValue);
+
+    g_bitImmunityFlags = read_flags(szNewValue);
 }
 
 CheckMap()
