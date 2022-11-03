@@ -117,7 +117,7 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
     if(get_member(item, m_iId) != WEAPON_AWP)
         return HC_CONTINUE;
 
-    debug_log(__LINE__, "CanHavePlayerItem called.");
+    debug_log(__LINE__, "<CanHavePlayerItem> called.");
 
     if(g_bIsLowOnline)
     {
@@ -140,7 +140,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(item != ITEM_AWP)
         return HC_CONTINUE;
 
-    debug_log(__LINE__, "HasRestrictItem called. Type: %i.", type);
+    debug_log(__LINE__, "<HasRestrictItem> called. Type: %i.", type);
 
     switch(type)
     {
@@ -231,7 +231,7 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     if(get_member(pItem, m_iId) != WEAPON_AWP || g_bIsLowOnline)
         return;
 
-    debug_log(__LINE__, "AddPlayerItem called.");
+    debug_log(__LINE__, "<AddPlayerItem> called.");
 
     g_iAWPAmount[get_member(id, m_iTeam)]++;
 }
@@ -288,7 +288,7 @@ public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
     if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP || g_bIsLowOnline)
         return;
 
-    debug_log(__LINE__, "DropPlayerItem called.");
+    debug_log(__LINE__, "<DropPlayerItem> called.");
 
     g_iAWPAmount[get_member(id, m_iTeam)]--;
 }
