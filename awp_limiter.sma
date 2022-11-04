@@ -43,6 +43,7 @@ new g_pCvarAwpRoundInfinite;
 new g_pCvarImmunity;
 new HookChain:g_iHookChainRoundEnd;
 new g_bitImmunityFlags;
+new g_iNumAllowedAWP;
 
 /* <== DEBUG ==> */
 
@@ -148,6 +149,11 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
     debug_log(__LINE__, "<HasRestrictItem> called. Type: %i.", type);
 
+    if(is_user_has_awp(id))
+    {
+        return HC_CONTINUE;
+    }
+
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
         return HC_CONTINUE;
 
@@ -157,25 +163,17 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         {
             if(g_bIsLowOnline)
             {
-                if(!is_user_has_awp(id))
-                {
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
+                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
 
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
-                }
-                else return HC_CONTINUE;
+                SetHookChainReturn(ATYPE_BOOL, true);
+                return HC_SUPERCEDE;
             }
             else if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
             {
-                if(!is_user_has_awp(id))
-                {
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
+                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
 
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
-                }
-                else return HC_CONTINUE;
+                SetHookChainReturn(ATYPE_BOOL, true);
+                return HC_SUPERCEDE;
             }
         }
         case ITEM_TYPE_TOUCHED:
@@ -185,39 +183,31 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
             if(g_bIsLowOnline)
             {
-                if(!is_user_has_awp(id))
+                if(iSendMessage == 0)
                 {
-                    if(iSendMessage == 0)
-                    {
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
-                    }
-                    else if(iSendMessage > 100)
-                    {
-                        iSendMessage = -1;
-                    }
-
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
                 }
-                else return HC_CONTINUE;
+                else if(iSendMessage > 100)
+                {
+                    iSendMessage = -1;
+                }
+
+                SetHookChainReturn(ATYPE_BOOL, true);
+                return HC_SUPERCEDE;
             }
             else if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
             {
-                if(!is_user_has_awp(id))
+                if(iSendMessage == 0)
                 {
-                    if(iSendMessage == 0)
-                    {
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
-                    }
-                    else if(iSendMessage > 100)
-                    {
-                        iSendMessage = -1;
-                    }
-                    
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
                 }
-                else return HC_CONTINUE;
+                else if(iSendMessage > 100)
+                {
+                    iSendMessage = -1;
+                }
+
+                SetHookChainReturn(ATYPE_BOOL, true);
+                return HC_SUPERCEDE;
             }
         }
         case ITEM_TYPE_EQUIPPED: 
@@ -314,10 +304,16 @@ public CheckOnline()
     switch(g_pCvarValue[LIMIT_TYPE])
     {
         case 1: debug_log(__LINE__, "Limit type: 1. Min players: %i", g_pCvarValue[MIN_PLAYERS]);
-        case 2: debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated percent: %i", g_pCvarValue[PERCENT_PLAYERS], floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor));
+        case 2:
+        {
+            g_iNumAllowedAWP = floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
+
+            debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated percent: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
+        }
     }
 
-    if(iOnlinePlayers < (g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MIN_PLAYERS] : floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor)))
+    if(g_pCvarValue[LIMIT_TYPE] == 1 && iOnlinePlayers < g_pCvarValue[MIN_PLAYERS] || \
+        g_pCvarValue[LIMIT_TYPE] == 2 && iOnlinePlayers < g_iNumAllowedAWP)
     {
         g_bIsLowOnline = true;
 
