@@ -149,10 +149,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
     debug_log(__LINE__, "<HasRestrictItem> called. Type: %i.", type);
 
-    if(is_user_has_awp(id))
-    {
+    if(user_has_awp(id))
         return HC_CONTINUE;
-    }
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
         return HC_CONTINUE;
@@ -227,7 +225,10 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
 public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
 {
-    if(get_member(pItem, m_iId) != WEAPON_AWP || g_bIsLowOnline)
+    if(g_bIsLowOnline)
+        return;
+
+    if(get_member(pItem, m_iId) != WEAPON_AWP)
         return;
 
     debug_log(__LINE__, "<AddPlayerItem> called.");
@@ -237,7 +238,10 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
 
 public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
 {
-    if(!is_user_has_awp(id) || g_bIsLowOnline)
+    if(g_bIsLowOnline)
+        return;
+
+    if(!user_has_awp(id))
         return;
 
     debug_log(__LINE__, "Player <%n> died with AWP.", id);
@@ -247,7 +251,10 @@ public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
 
 public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
 {
-    if(!is_user_connected(id) || !is_user_has_awp(id))
+    if(!is_user_connected(id))
+        return;
+
+    if(!user_has_awp(id))
         return;
 
     debug_log(__LINE__, "Player <%n> leaved from server with AWP.", id);
@@ -266,7 +273,7 @@ public RG_RestartRound_post()
 
     FOREACHPLAYER(iPlayers, id, g_pCvarValue[BOTS] ? (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
     {
-        if(is_user_has_awp(id))
+        if(user_has_awp(id))
         {
             g_iAWPAmount[get_member(id, m_iTeam)]++;
         }
@@ -282,9 +289,12 @@ public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmD
 
 public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
 {
+    if(g_bIsLowOnline)
+        return;
+
     new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
     
-    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP || g_bIsLowOnline)
+    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP)
         return;
 
     debug_log(__LINE__, "<DropPlayerItem> called.");
@@ -434,7 +444,7 @@ CheckMap()
     return PLUGIN_HANDLED;
 }
 
-stock bool:is_user_has_awp(const id)
+stock bool:user_has_awp(const id)
 {
     return rg_has_item_by_name(id, "weapon_awp");
 }
