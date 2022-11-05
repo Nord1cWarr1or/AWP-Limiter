@@ -299,21 +299,9 @@ public CheckOnline()
 
     new iOnlinePlayers = iNumCT + iNumTE;
 
-    debug_log(__LINE__, "CheckOnline called. Online players: %i", iOnlinePlayers);
+    debug_log(__LINE__, "<CheckOnline> called. Online players: %i", iOnlinePlayers);
 
-    switch(g_pCvarValue[LIMIT_TYPE])
-    {
-        case 1: debug_log(__LINE__, "Limit type: 1. Min players: %i", g_pCvarValue[MIN_PLAYERS]);
-        case 2:
-        {
-            g_iNumAllowedAWP = floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
-
-            debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated percent: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
-        }
-    }
-
-    if(g_pCvarValue[LIMIT_TYPE] == 1 && iOnlinePlayers < g_pCvarValue[MIN_PLAYERS] || \
-        g_pCvarValue[LIMIT_TYPE] == 2 && iOnlinePlayers < g_iNumAllowedAWP)
+    if(iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
     {
         g_bIsLowOnline = true;
 
@@ -335,6 +323,24 @@ public CheckOnline()
         }
 
         g_bIsLowOnline = false;
+    }
+
+    switch(g_pCvarValue[LIMIT_TYPE])
+    {
+        case 1: debug_log(__LINE__, "Limit type: 1. Max AWP per team: %i", g_pCvarValue[MAX_AWP]);
+        case 2:
+        {
+            g_iNumAllowedAWP = floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
+
+            debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated num of max AWP per team: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
+
+            if(g_iNumAllowedAWP < 1)
+            {
+                g_iNumAllowedAWP = 1;
+
+                debug_log(__LINE__, "The AWP limit is less than zero, so it was set to 1.", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
+            }
+        }
     }
 }
 
