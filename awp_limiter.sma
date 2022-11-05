@@ -30,7 +30,7 @@ enum _:Cvars
     PERCENT_PLAYERS,
     IMMNUNITY_FLAG[2],
     IMMUNITY_TYPE[3],
-    BOTS,
+    SKIP_BOTS,
     MESSAGE_ALLOWED_AWP,
     ROUND_INFINITE
 };
@@ -231,6 +231,9 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     if(get_member(pItem, m_iId) != WEAPON_AWP)
         return;
 
+    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+        return;
+
     debug_log(__LINE__, "<AddPlayerItem> called.");
 
     g_iAWPAmount[get_member(id, m_iTeam)]++;
@@ -239,6 +242,9 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
 public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
 {
     if(g_bIsLowOnline)
+        return;
+
+    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
         return;
 
     if(!user_has_awp(id))
@@ -254,10 +260,31 @@ public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
     if(!is_user_connected(id))
         return;
 
+    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+        return;
+
     if(!user_has_awp(id))
         return;
 
     debug_log(__LINE__, "Player <%n> leaved from server with AWP.", id);
+
+    g_iAWPAmount[get_member(id, m_iTeam)]--;
+}
+
+public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
+{
+    if(g_bIsLowOnline)
+        return;
+
+    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+        return;
+
+    new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
+    
+    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP)
+        return;
+
+    debug_log(__LINE__, "<DropPlayerItem> called.");
 
     g_iAWPAmount[get_member(id, m_iTeam)]--;
 }
@@ -271,7 +298,7 @@ public RG_RestartRound_post()
     if(g_bIsLowOnline)
         return;
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[BOTS] ? (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
     {
         if(user_has_awp(id))
         {
@@ -287,25 +314,10 @@ public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmD
     debug_log(__LINE__, "Round ended.");
 }
 
-public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
-{
-    if(g_bIsLowOnline)
-        return;
-
-    new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
-    
-    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP)
-        return;
-
-    debug_log(__LINE__, "<DropPlayerItem> called.");
-
-    g_iAWPAmount[get_member(id, m_iTeam)]--;
-}
-
 public CheckOnline()
 {
-    new iNumCT = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "CT");
-    new iNumTE = get_playersnum_ex(GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "TERRORIST");
+    new iNumCT = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "CT");
+    new iNumTE = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "TERRORIST");
 
     new iOnlinePlayers = iNumCT + iNumTE;
 
@@ -315,7 +327,7 @@ public CheckOnline()
     {
         g_bIsLowOnline = true;
 
-        FOREACHPLAYER(iPlayers, id, g_pCvarValue[BOTS] ? (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+        FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
         {
             if(rg_remove_item(id, "weapon_awp"))
             {
@@ -360,16 +372,16 @@ CreateCvars()
         .description = "Минимальное кол-во игроков, при котором станут доступны AWP"),
     g_pCvarValue[MIN_PLAYERS]);
 
-    bind_pcvar_num(create_cvar("awpl_max_awp", "2",                                         // +
-        .description = "Максимальное кол-во AWP на команду, при awpl_limit_type = 1",
-        .has_min = true, .min_val = 1.0),
-    g_pCvarValue[MAX_AWP]);
-
     bind_pcvar_num(create_cvar("awpl_limit_type", "2",
         .description = "Тип лимита AWP.^n1 - Точное кол-во AWP на команду^n2 - Процент от онлайн игроков (awpl_percent_players)",
         .has_min = true, .min_val = 1.0,
         .has_max = true, .max_val = 2.0),
     g_pCvarValue[LIMIT_TYPE]);
+
+    bind_pcvar_num(create_cvar("awpl_max_awp", "2",                                         // +
+        .description = "Максимальное кол-во AWP на команду, при awpl_limit_type = 1",
+        .has_min = true, .min_val = 1.0),
+    g_pCvarValue[MAX_AWP]);
 
     bind_pcvar_num(create_cvar("awpl_percent_players", "10",                                
         .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% - при онлайне 20 чел. доступно 2 AWP на команду"),
@@ -383,11 +395,11 @@ CreateCvars()
         .description = "Иммунитет от запрета:^na - Покупки AWP^nb - Поднятия с земли^nc - Взятия в различных меню"),
     g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
-    bind_pcvar_num(create_cvar("awpl_bots", "0",                                            // +
+    bind_pcvar_num(create_cvar("awpl_skip_bots", "0",                                            // +
         .description = "Подсчёт авп у ботов, выключите, если у вас нет ботов.^n0 - Выключен^n1 - Включен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
-    g_pCvarValue[BOTS]);
+    g_pCvarValue[SKIP_BOTS]);
 
     bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",                               // +
         .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 - Выключено^n1 - Включено",
