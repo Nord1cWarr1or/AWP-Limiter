@@ -123,10 +123,13 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
     if(get_member(item, m_iId) != WEAPON_AWP)
         return HC_CONTINUE;
 
-    debug_log(__LINE__, "<CanHavePlayerItem> called.");
+    debug_log(__LINE__, "<CanHavePlayerItem> called. Player: <%n>", id);
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
+    {
+        debug_log(__LINE__, "Player has immunity. Skipped.");
         return HC_CONTINUE;
+    }
 
     if(g_bIsLowOnline)
     {
@@ -149,13 +152,16 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(item != ITEM_AWP)
         return HC_CONTINUE;
 
-    debug_log(__LINE__, "<HasRestrictItem> called. Type: %i.", type);
-
     if(user_has_awp(id))
         return HC_CONTINUE;
 
+    debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
+
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
+    {
+        debug_log(__LINE__, "Player has immunity. Skipped.");
         return HC_CONTINUE;
+    }
 
     switch(type)
     {
@@ -233,12 +239,19 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     if(get_member(pItem, m_iId) != WEAPON_AWP)
         return;
 
+    debug_log(__LINE__, "<AddPlayerItem> called. Player: <%n>", id);
+
     if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
+    {
+        debug_log(__LINE__, "Player is bot. Skipped.");
         return;
+    }
 
-    debug_log(__LINE__, "<AddPlayerItem> called.");
+    new TeamName:iUserTeam = get_member(id, m_iTeam);
 
-    g_iAWPAmount[get_member(id, m_iTeam)]++;
+    g_iAWPAmount[iUserTeam]++;
+
+    debug_log(__LINE__, "(+) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
 public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
@@ -246,15 +259,22 @@ public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
     if(g_bIsLowOnline)
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
-        return;
-
     if(!user_has_awp(id))
         return;
 
-    debug_log(__LINE__, "Player <%n> died with AWP.", id);
+    debug_log(__LINE__, "<PlayerKilled> called. Player: <%n>", id);
 
-    g_iAWPAmount[get_member(id, m_iTeam)]--;
+    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
+    {
+        debug_log(__LINE__, "Player is bot. Skipped.");
+        return;
+    }
+
+    new TeamName:iUserTeam = get_member(id, m_iTeam);
+
+    g_iAWPAmount[iUserTeam]--;
+
+    debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
 public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
@@ -262,20 +282,27 @@ public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
     if(!is_user_connected(id))
         return;
 
+    if(!user_has_awp(id))
+        return;
+
+    debug_log(__LINE__, "<DropClient> called. Player: <%n>", id);
+
     if(IsUserBot[id])
     {
         IsUserBot[id] = false;
 
         if(g_pCvarValue[SKIP_BOTS])
+        {
+            debug_log(__LINE__, "Player is bot. Skipped.");
             return;
+        }
     }
 
-    if(!user_has_awp(id))
-        return;
+    new TeamName:iUserTeam = get_member(id, m_iTeam);
 
-    debug_log(__LINE__, "Player <%n> leaved from server with AWP.", id);
+    g_iAWPAmount[iUserTeam]--;
 
-    g_iAWPAmount[get_member(id, m_iTeam)]--;
+    debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
 public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
@@ -283,17 +310,24 @@ public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
     if(g_bIsLowOnline)
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
-        return;
-
     new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
     
     if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP)
         return;
 
-    debug_log(__LINE__, "<DropPlayerItem> called.");
+    debug_log(__LINE__, "<DropPlayerItem> called. Player: <%n>", id);
 
-    g_iAWPAmount[get_member(id, m_iTeam)]--;
+    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
+    {
+        debug_log(__LINE__, "Player is bot. Skipped.");
+        return;
+    }
+
+    new TeamName:iUserTeam = get_member(id, m_iTeam);
+
+    g_iAWPAmount[iUserTeam]--;
+
+    debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
 public client_putinserver(id)
@@ -308,10 +342,13 @@ public RG_RestartRound_post()
 {
     arrayset(g_iAWPAmount[TEAM_UNASSIGNED], 0, sizeof g_iAWPAmount);
 
-    debug_log(__LINE__, "New round started.");
+    debug_log(__LINE__, "New round has started.");
 
     if(g_bIsLowOnline)
+    {
+        debug_log(__LINE__, "Low online mode is now active. AWP count is skipped.");
         return;
+    }
 
     FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
     {
@@ -320,13 +357,15 @@ public RG_RestartRound_post()
             g_iAWPAmount[get_member(id, m_iTeam)]++;
         }
     }
+
+    debug_log(__LINE__, "Now it's [ %i ] AWP in CT team & [ %i ] AWP in TE team.", g_iAWPAmount[TEAM_CT], g_iAWPAmount[TEAM_TERRORIST]);
 }
 
 public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
-    CheckOnline();
-
     debug_log(__LINE__, "Round ended.");
+
+    CheckOnline();
 }
 
 public CheckOnline()
@@ -336,30 +375,40 @@ public CheckOnline()
 
     new iOnlinePlayers = iNumCT + iNumTE;
 
-    debug_log(__LINE__, "<CheckOnline> called. Online players: %i", iOnlinePlayers);
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ]. %s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? "Bots skipped." : "");
 
     if(iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
     {
-        g_bIsLowOnline = true;
-
-        FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+        if(!g_bIsLowOnline)
         {
-            if(rg_remove_item(id, "weapon_awp"))
-            {
-                g_iAWPAmount[get_member(id, m_iTeam)]--;
+            g_bIsLowOnline = true;
 
-                client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");                
+            FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+            {
+                if(rg_remove_item(id, "weapon_awp"))
+                {
+                    g_iAWPAmount[get_member(id, m_iTeam)]--;
+
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");                
+                }
             }
+
+            debug_log(__LINE__, "Low online mode started.");
         }
     }
     else
     {
-        if(g_bIsLowOnline && g_pCvarValue[MESSAGE_ALLOWED_AWP])
+        if(g_bIsLowOnline)
         {
-            client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
-        }
+            g_bIsLowOnline = false;
 
-        g_bIsLowOnline = false;
+            if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
+            {
+                client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
+            }
+
+            debug_log(__LINE__, "Low online mode stopped.");
+        }
     }
 
     switch(g_pCvarValue[LIMIT_TYPE])
