@@ -411,7 +411,7 @@ CreateCvars()
     g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
     bind_pcvar_num(create_cvar("awpl_skip_bots", "0",                                            // +
-        .description = "Подсчёт авп у ботов, выключите, если у вас нет ботов.^n0 - Выключен^n1 - Включен",
+        .description = "Пропуск подсчёта авп у ботов, выключите, если у вас нет ботов.^n0 - Включен^n1 - Выключен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_BOTS]);
