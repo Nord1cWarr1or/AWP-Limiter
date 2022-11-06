@@ -45,6 +45,8 @@ new HookChain:g_iHookChainRoundEnd;
 new g_bitImmunityFlags;
 new g_iNumAllowedAWP;
 
+new bool:IsUserBot[MAX_PLAYERS + 1];
+
 /* <== DEBUG ==> */
 
 new bool:g_bIsDebugActive;
@@ -231,7 +233,7 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     if(get_member(pItem, m_iId) != WEAPON_AWP)
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
         return;
 
     debug_log(__LINE__, "<AddPlayerItem> called.");
@@ -244,7 +246,7 @@ public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
     if(g_bIsLowOnline)
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
         return;
 
     if(!user_has_awp(id))
@@ -260,8 +262,13 @@ public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
     if(!is_user_connected(id))
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
-        return;
+    if(IsUserBot[id])
+    {
+        IsUserBot[id] = false;
+
+        if(g_pCvarValue[SKIP_BOTS])
+            return;
+    }
 
     if(!user_has_awp(id))
         return;
@@ -276,7 +283,7 @@ public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
     if(g_bIsLowOnline)
         return;
 
-    if(g_pCvarValue[SKIP_BOTS] && is_user_bot(id))
+    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
         return;
 
     new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
@@ -287,6 +294,14 @@ public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
     debug_log(__LINE__, "<DropPlayerItem> called.");
 
     g_iAWPAmount[get_member(id, m_iTeam)]--;
+}
+
+public client_putinserver(id)
+{
+    if(is_user_bot(id))
+    {
+        IsUserBot[id] = true;
+    }
 }
 
 public RG_RestartRound_post()
