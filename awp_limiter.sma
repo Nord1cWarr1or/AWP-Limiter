@@ -137,11 +137,15 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         SetHookChainReturn(ATYPE_INTEGER, false);
         return HC_SUPERCEDE;
     }
-    else if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
+    else
     {
-        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
-        SetHookChainReturn(ATYPE_INTEGER, false);
-        return HC_SUPERCEDE;
+        if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
+            g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
+        {
+            client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+            SetHookChainReturn(ATYPE_INTEGER, false);
+            return HC_SUPERCEDE;
+        }
     }
 
     return HC_CONTINUE;
@@ -174,12 +178,16 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 SetHookChainReturn(ATYPE_BOOL, true);
                 return HC_SUPERCEDE;
             }
-            else if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
+            else
             {
-                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
+                if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
+                    g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
+                {
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
-                SetHookChainReturn(ATYPE_BOOL, true);
-                return HC_SUPERCEDE;
+                    SetHookChainReturn(ATYPE_BOOL, true);
+                    return HC_SUPERCEDE;
+                }
             }
         }
         case ITEM_TYPE_TOUCHED:
@@ -201,19 +209,23 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 SetHookChainReturn(ATYPE_BOOL, true);
                 return HC_SUPERCEDE;
             }
-            else if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
+            else
             {
-                if(iSendMessage == 0)
+                if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
+                    g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[MAX_AWP]);
-                }
-                else if(iSendMessage > 100)
-                {
-                    iSendMessage = -1;
-                }
+                    if(iSendMessage == 0)
+                    {
+                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+                    }
+                    else if(iSendMessage > 100)
+                    {
+                        iSendMessage = -1;
+                    }
 
-                SetHookChainReturn(ATYPE_BOOL, true);
-                return HC_SUPERCEDE;
+                    SetHookChainReturn(ATYPE_BOOL, true);
+                    return HC_SUPERCEDE;
+                }
             }
         }
         case ITEM_TYPE_EQUIPPED: 
