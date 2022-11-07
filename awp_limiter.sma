@@ -97,6 +97,8 @@ public plugin_init()
         new szMapName[MAX_MAPNAME_LENGTH];
         rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
 
+        log_to_file(g_szLogPach, "================================================================");
+
         debug_log(__LINE__, "Plugin initializated. Map: %s.", szMapName);
     }
 
@@ -134,6 +136,9 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
     if(g_bIsLowOnline)
     {
         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
+
+        debug_log(__LINE__, "Player can't take AWP because of low online.");
+
         SetHookChainReturn(ATYPE_INTEGER, false);
         return HC_SUPERCEDE;
     }
@@ -143,6 +148,9 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
             g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
         {
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+
+            debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
+
             SetHookChainReturn(ATYPE_INTEGER, false);
             return HC_SUPERCEDE;
         }
@@ -156,7 +164,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(item != ITEM_AWP)
         return HC_CONTINUE;
 
-    if(user_has_awp(id))
+    if(get_member(id, m_bHasPrimary))
         return HC_CONTINUE;
 
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
@@ -175,6 +183,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
             {
                 client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
 
+                debug_log(__LINE__, "Player can't take AWP because of low online.");
+
                 SetHookChainReturn(ATYPE_BOOL, true);
                 return HC_SUPERCEDE;
             }
@@ -184,6 +194,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+
+                    debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
 
                     SetHookChainReturn(ATYPE_BOOL, true);
                     return HC_SUPERCEDE;
@@ -200,6 +212,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 if(iSendMessage == 0)
                 {
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
+
+                    debug_log(__LINE__, "Player can't take AWP because of low online.");
                 }
                 else if(iSendMessage > 100)
                 {
@@ -217,6 +231,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     if(iSendMessage == 0)
                     {
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+
+                        debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
                     }
                     else if(iSendMessage > 100)
                     {
@@ -354,7 +370,7 @@ public RG_RestartRound_post()
 {
     arrayset(g_iAWPAmount[TEAM_UNASSIGNED], 0, sizeof g_iAWPAmount);
 
-    debug_log(__LINE__, "New round has started.");
+    debug_log(__LINE__, "--> New round has started. <--");
 
     if(g_bIsLowOnline)
     {
@@ -375,7 +391,7 @@ public RG_RestartRound_post()
 
 public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
-    debug_log(__LINE__, "Round ended.");
+    debug_log(__LINE__, "--> Round is ended. <--");
 
     CheckOnline();
 }
@@ -436,7 +452,7 @@ public CheckOnline()
             {
                 g_iNumAllowedAWP = 1;
 
-                debug_log(__LINE__, "The AWP limit is less than zero, so it was set to 1.", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
+                debug_log(__LINE__, "The AWP limit is less than one, so it was set to 1.", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
             }
         }
     }
@@ -530,6 +546,11 @@ CheckMap()
     }
 
     return PLUGIN_HANDLED;
+}
+
+public plugin_end()
+{
+    log_to_file(g_szLogPach, "================================================================^n");
 }
 
 stock bool:user_has_awp(const id)
