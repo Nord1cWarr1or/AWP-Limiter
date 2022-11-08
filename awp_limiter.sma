@@ -2,7 +2,7 @@
 #include <amxmisc>
 #include <reapi>
 
-new const PLUGIN_VERSION[] = "0.0.10";
+new const PLUGIN_VERSION[] = "1.0.0 Beta";
 
 #pragma semicolon 1
 
