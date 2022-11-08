@@ -109,7 +109,11 @@ public OnConfigsExecuted()
     if(g_pCvarValue[ROUND_INFINITE])
     {
         DisableHookChain(g_iHookChainRoundEnd);
-        set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+
+        if(!task_exists(TASKID__CHECK_ONLINE))
+        {
+            set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+        }
 
         debug_log(__LINE__, "Infinite round. Task for check online started.");
     }
@@ -528,10 +532,20 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
 {
     debug_log(__LINE__, "Cvar <awpl_round_infinite> changed. Old: %s. New: %s", szOldValue, szNewValue);
 
-    if(str_to_num(szNewValue))
+    new iNewValue = str_to_num(szNewValue);
+
+    if(iNewValue)
     {
         DisableHookChain(g_iHookChainRoundEnd);
-        set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+
+        if(!task_exists(TASKID__CHECK_ONLINE))
+        {
+            set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+        }
+        else
+        {
+            change_task(TASKID__CHECK_ONLINE, float(iNewValue));
+        }
 
         CheckOnline();
     }
