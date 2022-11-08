@@ -435,8 +435,11 @@ public CheckOnline()
                 }
             }
 
-            debug_log(__LINE__, "Low online mode started.");
+            debug_log(__LINE__, "Low online mode has started.");
+            return;
         }
+        else
+            return;
     }
     else
     {
@@ -449,7 +452,7 @@ public CheckOnline()
                 client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
             }
 
-            debug_log(__LINE__, "Low online mode stopped.");
+            debug_log(__LINE__, "Low online mode has stopped.");
         }
     }
 
