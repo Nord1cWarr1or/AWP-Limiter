@@ -525,6 +525,8 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
     {
         DisableHookChain(g_iHookChainRoundEnd);
         set_task_ex(CHECK_ONLINE_FREQ, "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+
+        CheckOnline();
     }
     else
     {
