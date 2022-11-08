@@ -405,6 +405,12 @@ public CheckOnline()
 
     debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ]. %s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? "Bots skipped." : "");
 
+    if(!iOnlinePlayers)
+    {
+        g_bIsLowOnline = true;
+        return;
+    }
+
     if(iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
     {
         if(!g_bIsLowOnline)
