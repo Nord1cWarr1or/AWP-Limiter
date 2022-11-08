@@ -32,6 +32,7 @@ enum _:Cvars
     IMMNUNITY_FLAG[2],
     IMMUNITY_TYPE[3],
     SKIP_BOTS,
+    SKIP_SPECTATORS,
     MESSAGE_ALLOWED_AWP,
     ROUND_INFINITE
 };
@@ -402,7 +403,12 @@ public CheckOnline()
 
     new iOnlinePlayers = iNumCT + iNumTE;
 
-    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ]. %s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? "Bots skipped." : "");
+    if(!g_pCvarValue[SKIP_SPECTATORS])
+    {
+        iOnlinePlayers += get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "SPECTATOR");
+    }
+
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s%s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? " Bots skipped." : "", g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
     if(!iOnlinePlayers)
     {
@@ -493,10 +499,16 @@ CreateCvars()
     g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
     bind_pcvar_num(create_cvar("awpl_skip_bots", "0",
-        .description = "Пропуск подсчёта авп у ботов.^n0 - Включен^n1 - Выключен",
+        .description = "Пропуск подсчёта авп у ботов.^n0 - Выключен^n1 - Включен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_BOTS]);
+
+    bind_pcvar_num(create_cvar("awpl_skip_spectators", "1",
+        .description = "Пропуск зрителей при подсчёте онлайна.^n0 - Выключен^n1 - Включен",
+        .has_min = true, .min_val = 0.0,
+        .has_max = true, .max_val = 1.0),
+    g_pCvarValue[SKIP_SPECTATORS]);
 
     bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",
         .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 - Выключено^n1 - Включено",
