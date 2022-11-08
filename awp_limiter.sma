@@ -20,7 +20,6 @@ stock dummyFunc(cell) {
 const MAX_MAPNAME_LENGTH = 64;
 #endif
 
-const Float:CHECK_ONLINE_FREQ = 60.0;
 const TASKID__CHECK_ONLINE = 10200;
 
 enum _:Cvars
@@ -110,7 +109,7 @@ public OnConfigsExecuted()
     if(g_pCvarValue[ROUND_INFINITE])
     {
         DisableHookChain(g_iHookChainRoundEnd);
-        set_task_ex(CHECK_ONLINE_FREQ, "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+        set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
 
         debug_log(__LINE__, "Infinite round. Task for check online started.");
     }
@@ -476,7 +475,7 @@ CreateCvars()
     g_pCvarValue[MIN_PLAYERS]);
 
     bind_pcvar_num(create_cvar("awpl_limit_type", "1",
-        .description = "Тип лимита AWP.^n1 - Точное кол-во AWP на команду^n2 - Процент от онлайн игроков (awpl_percent_players)",
+        .description = "Тип лимита AWP.^n1 — Точное кол-во AWP на команду^n2 — Процент от онлайн игроков (awpl_percent_players)",
         .has_min = true, .min_val = 1.0,
         .has_max = true, .max_val = 2.0),
     g_pCvarValue[LIMIT_TYPE]);
@@ -487,7 +486,7 @@ CreateCvars()
     g_pCvarValue[MAX_AWP]);
 
     bind_pcvar_num(create_cvar("awpl_percent_players", "10",
-        .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% - при онлайне 20 чел. доступно 2 AWP на команду"),
+        .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% — при онлайне 20 чел. доступно 2 AWP на команду"),
     g_pCvarValue[PERCENT_PLAYERS]);
 
     bind_pcvar_string(g_pCvarImmunity = create_cvar("awpl_immunity_flag", "a",
@@ -495,29 +494,29 @@ CreateCvars()
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
 
     bind_pcvar_string(create_cvar("awpl_immunity_type", "abc",
-        .description = "Иммунитет от запрета:^na - Покупки AWP^nb - Поднятия с земли^nc - Взятия в различных меню"),
+        .description = "Иммунитет от запрета:^na — Покупки AWP^nb — Поднятия с земли^nc — Взятия в различных меню"),
     g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
     bind_pcvar_num(create_cvar("awpl_skip_bots", "0",
-        .description = "Пропуск подсчёта авп у ботов.^n0 - Выключен^n1 - Включен",
+        .description = "Пропуск подсчёта авп у ботов.^n0 — Выключен^n1 — Включен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_BOTS]);
 
     bind_pcvar_num(create_cvar("awpl_skip_spectators", "1",
-        .description = "Пропуск зрителей при подсчёте онлайна.^n0 - Выключен^n1 - Включен",
+        .description = "Пропуск зрителей при подсчёте онлайна.^n0 — Выключен^n1 — Включен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_SPECTATORS]);
 
     bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",
-        .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 - Выключено^n1 - Включено",
+        .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 — Выключено^n1 — Включено",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
-    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",
-        .description = "Поддержка бесконечного раунда. (CSDM)^n0 - Выключено^n1 - Включено",
+    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "45",
+        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n1 и больше — Проверять онлайн раз в N секунд",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[ROUND_INFINITE]);
@@ -533,7 +532,7 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
     if(str_to_num(szNewValue))
     {
         DisableHookChain(g_iHookChainRoundEnd);
-        set_task_ex(CHECK_ONLINE_FREQ, "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
+        set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
 
         CheckOnline();
     }
