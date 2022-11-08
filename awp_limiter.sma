@@ -4,8 +4,9 @@
 
 new const PLUGIN_VERSION[] = "0.0.10";
 
-// #pragma semicolon 1
+#pragma semicolon 1
 
+// Credits: Kaido Ren (https://github.com/KaidoRen)
 #define FOREACHPLAYER(%0,%1,%2) new __players[MAX_PLAYERS], %0, %1; \
     dummyFunc(%1); \
     get_players_ex(__players, %0, %2); \
@@ -59,8 +60,6 @@ public plugin_init()
     register_plugin("AWP Limiter", PLUGIN_VERSION, "Nordic Warrior");
 
     CheckMap();
-
-    // сделать мультиланг
 
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem, "RG_CSGameRules_CanHavePlayerItem_pre", .post = false);
     RegisterHookChain(RG_CBasePlayer_HasRestrictItem, "RG_CBasePlayer_HasRestrictItem_pre", .post = false);
@@ -466,26 +465,26 @@ public CheckOnline()
 
 CreateCvars()
 {
-    bind_pcvar_num(create_cvar("awpl_min_players", "10",                                    // +
+    bind_pcvar_num(create_cvar("awpl_min_players", "10",
         .description = "Минимальное кол-во игроков, при котором станут доступны AWP"),
     g_pCvarValue[MIN_PLAYERS]);
 
-    bind_pcvar_num(create_cvar("awpl_limit_type", "2",
+    bind_pcvar_num(create_cvar("awpl_limit_type", "1",
         .description = "Тип лимита AWP.^n1 - Точное кол-во AWP на команду^n2 - Процент от онлайн игроков (awpl_percent_players)",
         .has_min = true, .min_val = 1.0,
         .has_max = true, .max_val = 2.0),
     g_pCvarValue[LIMIT_TYPE]);
 
-    bind_pcvar_num(create_cvar("awpl_max_awp", "2",                                         // +
+    bind_pcvar_num(create_cvar("awpl_max_awp", "2",
         .description = "Максимальное кол-во AWP на команду, при awpl_limit_type = 1",
         .has_min = true, .min_val = 1.0),
     g_pCvarValue[MAX_AWP]);
 
-    bind_pcvar_num(create_cvar("awpl_percent_players", "10",                                
+    bind_pcvar_num(create_cvar("awpl_percent_players", "10",
         .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% - при онлайне 20 чел. доступно 2 AWP на команду"),
     g_pCvarValue[PERCENT_PLAYERS]);
 
-    bind_pcvar_string(g_pCvarImmunity = create_cvar("awpl_immunity_flag", "a",                                // +
+    bind_pcvar_string(g_pCvarImmunity = create_cvar("awpl_immunity_flag", "a",
         .description = "Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета"),
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
 
@@ -493,19 +492,19 @@ CreateCvars()
         .description = "Иммунитет от запрета:^na - Покупки AWP^nb - Поднятия с земли^nc - Взятия в различных меню"),
     g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
-    bind_pcvar_num(create_cvar("awpl_skip_bots", "0",                                            // +
-        .description = "Пропуск подсчёта авп у ботов, выключите, если у вас нет ботов.^n0 - Включен^n1 - Выключен",
+    bind_pcvar_num(create_cvar("awpl_skip_bots", "0",
+        .description = "Пропуск подсчёта авп у ботов.^n0 - Включен^n1 - Выключен",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_BOTS]);
 
-    bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",                               // +
+    bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",
         .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 - Выключено^n1 - Включено",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
-    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",           // +
+    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",
         .description = "Поддержка бесконечного раунда. (CSDM)^n0 - Выключено^n1 - Включено",
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
@@ -513,8 +512,6 @@ CreateCvars()
 
     hook_cvar_change(g_pCvarAwpRoundInfinite, "OnChangeCvar_RoundInfinite");
     hook_cvar_change(g_pCvarImmunity, "OnChangeCvar_Immunity");
-
-    // проверить все квары
 }
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
