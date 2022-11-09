@@ -17,7 +17,7 @@ stock dummyFunc(cell) {
 }
 
 #if !defined MAX_MAPNAME_LENGTH
-const MAX_MAPNAME_LENGTH = 64;
+const MAX_MAPNAME_LENGTH = 32;
 #endif
 
 const TASKID__CHECK_ONLINE = 10200;
