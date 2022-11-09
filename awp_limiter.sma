@@ -520,9 +520,9 @@ CreateCvars()
         .description = "Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета"),
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
 
-    bind_pcvar_string(create_cvar("awpl_immunity_type", "abc",
-        .description = "Иммунитет от запрета:^na — Покупки AWP^nb — Поднятия с земли^nc — Взятия в различных меню"),
-    g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
+    // bind_pcvar_string(create_cvar("awpl_immunity_type", "abc",
+    //     .description = "Иммунитет от запрета:^na — Покупки AWP^nb — Поднятия с земли^nc — Взятия в различных меню"),
+    // g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
     bind_pcvar_num(create_cvar("awpl_skip_bots", "0",
         .description = "Пропуск подсчёта авп у ботов.^n0 — Выключен^n1 — Включен",
@@ -604,8 +604,6 @@ CheckMap()
         log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", szMapName);
         pause("ad");
     }
-
-    return PLUGIN_HANDLED;
 }
 
 public plugin_end()
