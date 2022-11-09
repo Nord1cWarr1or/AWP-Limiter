@@ -42,7 +42,8 @@ new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
 new g_pCvarAwpRoundInfinite;
 new g_pCvarImmunity;
-new HookChain:g_iHookChainRoundEnd;
+new HookChain:g_iHookChain_RoundEnd;
+new HookChain:g_iHookChain_PlayerSpawn;
 new g_bitImmunityFlags;
 new g_iNumAllowedAWP;
 
@@ -61,14 +62,18 @@ public plugin_init()
 
     CheckMap();
 
-    RegisterHookChain(RG_CSGameRules_CanHavePlayerItem, "RG_CSGameRules_CanHavePlayerItem_pre", .post = false);
-    RegisterHookChain(RG_CBasePlayer_HasRestrictItem, "RG_CBasePlayer_HasRestrictItem_pre", .post = false);
-    RegisterHookChain(RG_CBasePlayer_AddPlayerItem, "RG_CBasePlayer_AddPlayerItem_post", .post = true);
-    RegisterHookChain(RG_CBasePlayer_Killed, "RG_CBasePlayer_Killed_pre", .post = false);
-    RegisterHookChain(RH_SV_DropClient, "RH_SV_DropClient_pre", .post = false);
-    RegisterHookChain(RG_CSGameRules_RestartRound, "RG_RestartRound_post", .post = true);
-    g_iHookChainRoundEnd = RegisterHookChain(RG_RoundEnd, "RG_RoundEnd_post", .post = true);
-    RegisterHookChain(RG_CBasePlayer_DropPlayerItem, "RG_CBasePlayer_DropPlayerItem_post", .post = true);
+    RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
+    RegisterHookChain(RG_CBasePlayer_HasRestrictItem,       "RG_CBasePlayer_HasRestrictItem_pre",       .post = false);
+    RegisterHookChain(RG_CBasePlayer_AddPlayerItem,         "RG_CBasePlayer_AddPlayerItem_post",        .post = true);
+    RegisterHookChain(RG_CBasePlayer_Killed,                "RG_CBasePlayer_Killed_pre",                .post = false);
+    RegisterHookChain(RH_SV_DropClient,                     "RH_SV_DropClient_pre",                     .post = false);
+    RegisterHookChain(RG_CSGameRules_RestartRound,          "RG_RestartRound_post",                     .post = true);
+    RegisterHookChain(RG_CBasePlayer_DropPlayerItem,        "RG_CBasePlayer_DropPlayerItem_post",       .post = true);
+
+    g_iHookChain_RoundEnd = RegisterHookChain(RG_RoundEnd,              "RG_RoundEnd_post",             .post = true);
+    g_iHookChain_PlayerSpawn = RegisterHookChain(RG_CBasePlayer_Spawn,  "RG_CBasePlayer_Spawn_post",    .post = true);
+
+    DisableHookChain(g_iHookChain_PlayerSpawn);
 
     CreateCvars();
 
@@ -106,9 +111,9 @@ public plugin_init()
 
 public OnConfigsExecuted()
 {
-    if(g_pCvarValue[ROUND_INFINITE])
+    if(g_pCvarValue[ROUND_INFINITE] > 0)
     {
-        DisableHookChain(g_iHookChainRoundEnd);
+        DisableHookChain(g_iHookChain_RoundEnd);
 
         if(!task_exists(TASKID__CHECK_ONLINE))
         {
@@ -116,6 +121,13 @@ public OnConfigsExecuted()
         }
 
         debug_log(__LINE__, "Infinite round. Task for check online started.");
+    }
+    else if(g_pCvarValue[ROUND_INFINITE] == -1)
+    {
+        DisableHookChain(g_iHookChain_RoundEnd);
+        EnableHookChain(g_iHookChain_PlayerSpawn);
+
+        debug_log(__LINE__, "Infinite round. Player Spawn hook enabled.");
     }
 
     g_bitImmunityFlags = read_flags(g_pCvarValue[IMMNUNITY_FLAG]);
@@ -392,6 +404,14 @@ public RG_RestartRound_post()
     debug_log(__LINE__, "Now it's [ %i ] AWP in CT team & [ %i ] AWP in TE team.", g_iAWPAmount[TEAM_CT], g_iAWPAmount[TEAM_TERRORIST]);
 }
 
+public RG_CBasePlayer_Spawn_post(const id)
+{
+    if(!is_user_alive(id))
+        return;
+
+    CheckOnline();
+}
+
 public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
     debug_log(__LINE__, "--> Round is ended. <--");
@@ -523,8 +543,8 @@ CreateCvars()
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
     bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",
-        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n1 и больше — Проверять онлайн раз в N секунд",
-        .has_min = true, .min_val = 0.0),
+        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n1 и больше — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока",
+        .has_min = true, .min_val = -1.0),
     g_pCvarValue[ROUND_INFINITE]);
 
     hook_cvar_change(g_pCvarAwpRoundInfinite, "OnChangeCvar_RoundInfinite");
@@ -537,9 +557,10 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
 
     new iNewValue = str_to_num(szNewValue);
 
-    if(iNewValue)
+    if(iNewValue > 0)
     {
-        DisableHookChain(g_iHookChainRoundEnd);
+        DisableHookChain(g_iHookChain_RoundEnd);
+        DisableHookChain(g_iHookChain_PlayerSpawn);
 
         if(!task_exists(TASKID__CHECK_ONLINE))
         {
@@ -552,9 +573,16 @@ public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
 
         CheckOnline();
     }
+    else if(iNewValue == -1)
+    {
+        DisableHookChain(g_iHookChain_RoundEnd);
+        remove_task(TASKID__CHECK_ONLINE);
+        EnableHookChain(g_iHookChain_PlayerSpawn);
+    }
     else
     {
-        EnableHookChain(g_iHookChainRoundEnd);
+        EnableHookChain(g_iHookChain_RoundEnd);
+        DisableHookChain(g_iHookChain_PlayerSpawn);
         remove_task(TASKID__CHECK_ONLINE);
     }
 }
