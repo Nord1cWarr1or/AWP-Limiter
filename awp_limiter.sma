@@ -40,8 +40,6 @@ new g_pCvarValue[Cvars];
 
 new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
-new g_pCvarAwpRoundInfinite;
-new g_pCvarImmunity;
 new HookChain:g_iHookChain_RoundEnd;
 new HookChain:g_iHookChain_PlayerSpawn;
 new g_bitImmunityFlags;
@@ -497,6 +495,8 @@ public CheckOnline()
 
 CreateCvars()
 {
+    new pCvar;
+
     bind_pcvar_num(create_cvar("awpl_min_players", "10",
         .description = "Минимальное кол-во игроков, при котором станут доступны AWP"),
     g_pCvarValue[MIN_PLAYERS]);
@@ -516,9 +516,11 @@ CreateCvars()
         .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% — при онлайне 20 чел. доступно 2 AWP на команду"),
     g_pCvarValue[PERCENT_PLAYERS]);
 
-    bind_pcvar_string(g_pCvarImmunity = create_cvar("awpl_immunity_flag", "a",
+    bind_pcvar_string(pCvar = create_cvar("awpl_immunity_flag", "a",
         .description = "Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета"),
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
+
+    hook_cvar_change(pCvar, "OnChangeCvar_Immunity");
 
     // bind_pcvar_string(create_cvar("awpl_immunity_type", "abc",
     //     .description = "Иммунитет от запрета:^na — Покупки AWP^nb — Поднятия с земли^nc — Взятия в различных меню"),
@@ -542,13 +544,12 @@ CreateCvars()
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
-    bind_pcvar_num(g_pCvarAwpRoundInfinite = create_cvar("awpl_round_infinite", "0",
+    bind_pcvar_num(pCvar = create_cvar("awpl_round_infinite", "0",
         .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n1 и больше — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока",
         .has_min = true, .min_val = -1.0),
     g_pCvarValue[ROUND_INFINITE]);
 
-    hook_cvar_change(g_pCvarAwpRoundInfinite, "OnChangeCvar_RoundInfinite");
-    hook_cvar_change(g_pCvarImmunity, "OnChangeCvar_Immunity");
+    hook_cvar_change(pCvar, "OnChangeCvar_RoundInfinite");
 }
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
