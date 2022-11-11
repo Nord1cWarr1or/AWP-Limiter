@@ -422,7 +422,7 @@ public CheckOnline()
 
     if(!g_pCvarValue[SKIP_SPECTATORS])
     {
-        iOnlinePlayers += get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "SPECTATOR");
+        iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
     }
 
     debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s%s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? " Bots skipped." : "", g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
