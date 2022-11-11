@@ -6,15 +6,11 @@ new const PLUGIN_VERSION[] = "1.0.0 Beta";
 
 #pragma semicolon 1
 
-// Credits: Kaido Ren (https://github.com/KaidoRen)
+// Idea from: Kaido Ren (https://github.com/KaidoRen)
 #define FOREACHPLAYER(%0,%1,%2) new __players[MAX_PLAYERS], %0, %1; \
-    dummyFunc(%1); \
+    %1 *= 1; \
     get_players_ex(__players, %0, %2); \
     for (new i, %1 = __players[i]; i < %0; %1 = __players[++i])
-
-stock dummyFunc(cell) {
-    #pragma unused cell
-}
 
 #if !defined MAX_MAPNAME_LENGTH
 const MAX_MAPNAME_LENGTH = 32;
