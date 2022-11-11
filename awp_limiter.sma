@@ -16,6 +16,8 @@ new const PLUGIN_VERSION[] = "1.0.0 Beta";
 const MAX_MAPNAME_LENGTH = 32;
 #endif
 
+new g_szMapName[MAX_MAPNAME_LENGTH];
+
 const TASKID__CHECK_ONLINE = 10200;
 
 enum _:Cvars
@@ -54,7 +56,13 @@ public plugin_init()
 {
     register_plugin("AWP Limiter", PLUGIN_VERSION, "Nordic Warrior");
 
-    CheckMap();
+    if(IsAwpMap())
+    {
+        log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", g_szMapName);
+        pause("ad");
+
+        return;
+    }
 
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
     RegisterHookChain(RG_CBasePlayer_HasRestrictItem,       "RG_CBasePlayer_HasRestrictItem_pre",       .post = false);
@@ -92,12 +100,9 @@ public plugin_init()
 
         formatex(g_szLogPach, charsmax(g_szLogPach), "%s/awpl__%i-%02i-%02i.log", szLogsDir, iYear, iMonth, iDay);
 
-        new szMapName[MAX_MAPNAME_LENGTH];
-        rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
-
         log_to_file(g_szLogPach, "================================================================");
 
-        debug_log(__LINE__, "Plugin initializated. Map: %s.", szMapName);
+        debug_log(__LINE__, "Plugin initializated. Map: %s.", g_szMapName);
     }
 
     /* <====> */
@@ -255,12 +260,9 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         }
         case ITEM_TYPE_EQUIPPED: 
         {
-            new szMapName[MAX_MAPNAME_LENGTH];
-            rh_get_mapname(szMapName, charsmax(szMapName));
-
-            log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", szMapName);
-
+            log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", g_szMapName);
             pause("ad");
+
             return HC_CONTINUE;
         }
     }
@@ -425,7 +427,7 @@ public CheckOnline()
         iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
     }
 
-    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s%s", iOnlinePlayers, g_pCvarValue[SKIP_BOTS] ? " Bots skipped." : "", g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
     if(!iOnlinePlayers)
     {
@@ -591,16 +593,16 @@ public OnChangeCvar_Immunity(pCvar, const szOldValue[], const szNewValue[])
     g_bitImmunityFlags = read_flags(szNewValue);
 }
 
-CheckMap()
+IsAwpMap()
 {
-    new szMapName[MAX_MAPNAME_LENGTH];
-    rh_get_mapname(szMapName, charsmax(szMapName));
+    rh_get_mapname(g_szMapName, charsmax(g_szMapName), MNT_TRUE);
 
-    if(equali(szMapName, "awp_", 4))
+    if(equali(g_szMapName, "awp_", 4))
     {
-        log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", szMapName);
-        pause("ad");
+        return true;
     }
+
+    return false;
 }
 
 public plugin_end()
