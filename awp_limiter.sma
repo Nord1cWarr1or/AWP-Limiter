@@ -138,14 +138,14 @@ public OnConfigsExecuted()
 public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
 {
     if(get_member(item, m_iId) != WEAPON_AWP)
-        return HC_CONTINUE;
+        return;
 
     debug_log(__LINE__, "<CanHavePlayerItem> called. Player: <%n>", id);
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
     {
         debug_log(__LINE__, "Player has immunity. Skipped.");
-        return HC_CONTINUE;
+        return;
     }
 
     if(g_bIsLowOnline)
@@ -155,7 +155,6 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         debug_log(__LINE__, "Player can't take AWP because of low online.");
 
         SetHookChainReturn(ATYPE_INTEGER, false);
-        return HC_SUPERCEDE;
     }
     else
     {
@@ -167,27 +166,24 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
             debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
 
             SetHookChainReturn(ATYPE_INTEGER, false);
-            return HC_SUPERCEDE;
         }
     }
-
-    return HC_CONTINUE;
 }
 
 public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:type)
 {
     if(item != ITEM_AWP)
-        return HC_CONTINUE;
+        return;
 
     if(user_has_awp(id))
-        return HC_CONTINUE;
+        return;
 
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
     {
         debug_log(__LINE__, "Player has immunity. Skipped.");
-        return HC_CONTINUE;
+        return;
     }
 
     switch(type)
@@ -201,7 +197,6 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 debug_log(__LINE__, "Player can't buy AWP because of low online.");
 
                 SetHookChainReturn(ATYPE_BOOL, true);
-                return HC_SUPERCEDE;
             }
             else
             {
@@ -213,7 +208,6 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
 
                     SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
                 }
             }
         }
@@ -236,7 +230,6 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 debug_log(__LINE__, "Player can't take AWP from ground because of low online.");
 
                 SetHookChainReturn(ATYPE_BOOL, true);
-                return HC_SUPERCEDE;
             }
             else
             {
@@ -255,7 +248,6 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     }
 
                     SetHookChainReturn(ATYPE_BOOL, true);
-                    return HC_SUPERCEDE;
                 }
             }
         }
@@ -264,11 +256,9 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
             log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", g_szMapName);
             pause("ad");
 
-            return HC_CONTINUE;
+            return;
         }
     }
-
-    return HC_CONTINUE;
 }
 
 public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
