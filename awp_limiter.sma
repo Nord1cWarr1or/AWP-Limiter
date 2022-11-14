@@ -150,7 +150,7 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
 
     if(g_bIsLowOnline)
     {
-        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
+        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
         debug_log(__LINE__, "Player can't take AWP because of low online.");
 
@@ -196,9 +196,9 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         {
             if(g_bIsLowOnline)
             {
-                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
+                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
-                debug_log(__LINE__, "Player can't take AWP because of low online.");
+                debug_log(__LINE__, "Player can't buy AWP because of low online.");
 
                 SetHookChainReturn(ATYPE_BOOL, true);
                 return HC_SUPERCEDE;
@@ -210,7 +210,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 {
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
-                    debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
+                    debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
 
                     SetHookChainReturn(ATYPE_BOOL, true);
                     return HC_SUPERCEDE;
@@ -226,14 +226,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
             {
                 if(iSendMessage == 0)
                 {
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1. ^3(без учёта зрителей)", g_pCvarValue[MIN_PLAYERS]);
-
-                    debug_log(__LINE__, "Player can't take AWP because of low online.");
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
                 }
                 else if(iSendMessage > 100)
                 {
                     iSendMessage = -1;
                 }
+
+                debug_log(__LINE__, "Player can't take AWP from ground because of low online.");
 
                 SetHookChainReturn(ATYPE_BOOL, true);
                 return HC_SUPERCEDE;
@@ -247,7 +247,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     {
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
-                        debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
+                        debug_log(__LINE__, "Player can't take AWP from ground because of it's too much in team.");
                     }
                     else if(iSendMessage > 100)
                     {
@@ -428,7 +428,7 @@ public CheckOnline()
         iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
     }
 
-    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i / %i ].%s", iOnlinePlayers, g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
     if(!iOnlinePlayers)
     {
