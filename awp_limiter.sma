@@ -106,9 +106,13 @@ public plugin_init()
     }
 
     /* <====> */
+
+    // Fix https://github.com/alliedmodders/amxmodx/issues/728#issue-450682936
+    // Credits: wopox1337 (https://github.com/ChatAdditions/ChatAdditions_AMXX/commit/47c682051f2d1697a4b3d476f4f3cdd3eb1f6be7)
+    set_task(6.274, "_OnConfigsExecuted");
 }
 
-public OnConfigsExecuted()
+public _OnConfigsExecuted()
 {
     if(g_pCvarValue[ROUND_INFINITE] > 0)
     {
