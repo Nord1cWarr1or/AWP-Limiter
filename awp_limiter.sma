@@ -68,10 +68,9 @@ public plugin_init()
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
     RegisterHookChain(RG_CBasePlayer_HasRestrictItem,       "RG_CBasePlayer_HasRestrictItem_pre",       .post = false);
     RegisterHookChain(RG_CBasePlayer_AddPlayerItem,         "RG_CBasePlayer_AddPlayerItem_post",        .post = true);
-    RegisterHookChain(RG_CBasePlayer_Killed,                "RG_CBasePlayer_Killed_pre",                .post = false);
     RegisterHookChain(RH_SV_DropClient,                     "RH_SV_DropClient_pre",                     .post = false);
     RegisterHookChain(RG_CSGameRules_RestartRound,          "RG_RestartRound_post",                     .post = true);
-    RegisterHookChain(RG_CBasePlayer_DropPlayerItem,        "RG_CBasePlayer_DropPlayerItem_post",       .post = true);
+    RegisterHookChain(RG_CBasePlayer_RemovePlayerItem,      "RG_CBasePlayer_RemovePlayerItem_post",     .post = true);
 
     g_iHookChain_RoundEnd = RegisterHookChain(RG_RoundEnd,              "RG_RoundEnd_post",             .post = true);
     g_iHookChain_PlayerSpawn = RegisterHookChain(RG_CBasePlayer_Spawn,  "RG_CBasePlayer_Spawn_post",    .post = true);
@@ -284,29 +283,6 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     debug_log(__LINE__, "(+) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib)
-{
-    if(g_bIsLowOnline)
-        return;
-
-    if(!user_has_awp(id))
-        return;
-
-    debug_log(__LINE__, "<PlayerKilled> called. Player: <%n>", id);
-
-    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
-    {
-        debug_log(__LINE__, "Player is bot. Skipped.");
-        return;
-    }
-
-    new TeamName:iUserTeam = get_member(id, m_iTeam);
-
-    g_iAWPAmount[iUserTeam]--;
-
-    debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
-}
-
 public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
 {
     if(!is_user_connected(id))
@@ -335,17 +311,15 @@ public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
     debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public RG_CBasePlayer_DropPlayerItem_post(const id, const pszItemName[])
+public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem)
 {
     if(g_bIsLowOnline)
         return;
 
-    new iWeaponBox = GetHookChainReturn(ATYPE_INTEGER);
-    
-    if(rg_get_weaponbox_id(iWeaponBox) != WEAPON_AWP)
+    if(get_member(pItem, m_iId) != WEAPON_AWP)
         return;
 
-    debug_log(__LINE__, "<DropPlayerItem> called. Player: <%n>", id);
+    debug_log(__LINE__, "<RemovePlayerItem> called. Player: <%n>", id);
 
     if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
     {
@@ -418,7 +392,7 @@ public CheckOnline()
         iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
     }
 
-    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i / %i ].%s", iOnlinePlayers, g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
     if(!iOnlinePlayers)
     {
