@@ -6,10 +6,10 @@ new const PLUGIN_VERSION[] = "1.0.0 Beta";
 
 #pragma semicolon 1
 
-// Idea from: Kaido Ren (https://github.com/KaidoRen)
-#define FOREACHPLAYER(%0,%1,%2) new __players[MAX_PLAYERS], %0, %1; \
+// Based on code by: Kaido Ren, Garey
+#define FOREACHPLAYER(%0,%1,%2,%3) new __players[MAX_PLAYERS], %0, %1; \
     %1 *= 1; \
-    get_players_ex(__players, %0, %2); \
+    get_players_ex(__players, %0, %2, %3); \
     for (new i, %1 = __players[i]; i < %0; %1 = __players[++i])
 
 #if !defined MAX_MAPNAME_LENGTH
@@ -31,7 +31,8 @@ enum _:Cvars
     SKIP_BOTS,
     SKIP_SPECTATORS,
     MESSAGE_ALLOWED_AWP,
-    ROUND_INFINITE
+    ROUND_INFINITE,
+    GIVE_COMPENSATION
 };
 
 new g_pCvarValue[Cvars];
@@ -178,7 +179,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(item != ITEM_AWP)
         return HC_CONTINUE;
 
-    if(get_member(id, m_bHasPrimary))
+    if(user_has_awp(id))
         return HC_CONTINUE;
 
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
@@ -389,7 +390,7 @@ public RG_RestartRound_post()
         return;
     }
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
     {
         if(user_has_awp(id))
         {
@@ -441,21 +442,22 @@ public CheckOnline()
         {
             g_bIsLowOnline = true;
 
-            FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead))
+            FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
             {
                 if(rg_remove_item(id, "weapon_awp"))
                 {
                     g_iAWPAmount[get_member(id, m_iTeam)]--;
 
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");                
+                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
+
+                    GiveCompensation(id);
                 }
             }
 
             debug_log(__LINE__, "Low online mode has started.");
-            return;
         }
-        else
-            return;
+
+        return;
     }
     else
     {
@@ -487,6 +489,66 @@ public CheckOnline()
 
                 debug_log(__LINE__, "The AWP limit is less than one, so it was set to 1.", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
             }
+
+            if(g_iAWPAmount[TEAM_TERRORIST] > g_iNumAllowedAWP)
+            {
+                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "TERRORIST")
+                {
+                    if(rg_remove_item(id, "weapon_awp"))
+                    {
+                        g_iAWPAmount[TEAM_TERRORIST]--;
+
+                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
+
+                        GiveCompensation(id);
+                    }
+                }
+            }
+
+            if(g_iAWPAmount[TEAM_CT] > g_iNumAllowedAWP)
+            {
+                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "CT")
+                {
+                    if(rg_remove_item(id, "weapon_awp"))
+                    {
+                        g_iAWPAmount[TEAM_CT]--;
+
+                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
+
+                        GiveCompensation(id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+GiveCompensation(const id)
+{
+    if(!g_pCvarValue[GIVE_COMPENSATION])
+        return;
+    
+    switch(g_pCvarValue[GIVE_COMPENSATION])
+    {
+        case -1:
+        {
+            if(random_num(0, 1))
+            {
+                rg_give_item(id, "weapon_ak47");
+                rg_set_user_bpammo(id, WEAPON_AK47, 90);
+            }
+            else
+            {
+                rg_give_item(id, "weapon_m4a1");
+                rg_set_user_bpammo(id, WEAPON_M4A1, 90);
+            }
+
+            client_print_color(id, print_team_blue, "^3[^4AWP^3] ^1Вам ^3выдана ^4винтовка ^1в качестве ^3компенсации^1.");
+        }
+        default:
+        {
+            rg_add_account(id, g_pCvarValue[GIVE_COMPENSATION]);
+            client_print_color(id, print_team_blue, "^3[^4AWP^3] ^1Вам ^3выдана компенсация ^1в размере ^3%i^4$", g_pCvarValue[GIVE_COMPENSATION]);
         }
     }
 }
@@ -543,11 +605,16 @@ CreateCvars()
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
     bind_pcvar_num(pCvar = create_cvar("awpl_round_infinite", "0",
-        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n1 и больше — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока",
+        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n>= 1 — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока",
         .has_min = true, .min_val = -1.0),
     g_pCvarValue[ROUND_INFINITE]);
 
     hook_cvar_change(pCvar, "OnChangeCvar_RoundInfinite");
+
+    bind_pcvar_num(create_cvar("awpl_give_compensation", "-1",
+        .description = "Выдача компенсации за отобранное AWP при понижении онлайна.^n-1 — AK-47 или M4A1.^n0 — Выключено^n> 1 — Указаное количество денег.",
+        .has_min = true, .min_val = -1.0),
+    g_pCvarValue[GIVE_COMPENSATION]);
 }
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
