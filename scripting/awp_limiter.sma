@@ -79,7 +79,7 @@ public plugin_init()
 
     CreateCvars();
 
-    AutoExecConfig();
+    AutoExecConfig(.name = "AWPLimiter");
 
     /* <== DEBUG ==> */
 
