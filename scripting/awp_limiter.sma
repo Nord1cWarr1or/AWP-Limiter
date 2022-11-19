@@ -37,6 +37,15 @@ enum _:Cvars
 
 new g_pCvarValue[Cvars];
 
+enum _:API_FORWARDS
+{
+    LOW_ONLINE_MODE_STARTED,
+    LOW_ONLINE_MODE_STOPPED
+};
+
+new g_iForwardsPointers[API_FORWARDS];
+// new g_iReturn;
+
 new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
 new HookChain:g_iHookChain_RoundEnd;
@@ -80,6 +89,8 @@ public plugin_init()
     CreateCvars();
 
     AutoExecConfig(.name = "AWPLimiter");
+
+    CreateAPIForwards();
 
     /* <== DEBUG ==> */
 
@@ -422,6 +433,8 @@ public CheckOnline()
                 }
             }
 
+            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]);
+
             debug_log(__LINE__, "Low online mode has started.");
         }
 
@@ -437,6 +450,8 @@ public CheckOnline()
             {
                 client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
             }
+
+            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]);
 
             debug_log(__LINE__, "Low online mode has stopped.");
         }
@@ -638,6 +653,22 @@ IsAwpMap()
     }
 
     return false;
+}
+
+CreateAPIForwards()
+{
+    g_iForwardsPointers[LOW_ONLINE_MODE_STARTED] = CreateMultiForward("awpl_low_online_started", ET_IGNORE);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED] = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
+}
+
+public plugin_natives()
+{
+    register_native("awpl_is_low_online", "native_awpl_is_low_online");
+}
+
+public native_awpl_is_low_online(iPlugin, iParams)
+{
+    return g_bIsLowOnline;
 }
 
 public plugin_end()
