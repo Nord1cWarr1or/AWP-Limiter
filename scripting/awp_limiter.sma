@@ -2,6 +2,8 @@
 #include <amxmisc>
 #include <reapi>
 
+#include <awp_limiter_n>
+
 new const PLUGIN_VERSION[] = "1.0.0 Beta";
 
 #pragma semicolon 1
@@ -40,11 +42,12 @@ new g_pCvarValue[Cvars];
 enum _:API_FORWARDS
 {
     LOW_ONLINE_MODE_STARTED,
-    LOW_ONLINE_MODE_STOPPED
+    LOW_ONLINE_MODE_STOPPED,
+    TRIED_TO_GET_AWP
 };
 
 new g_iForwardsPointers[API_FORWARDS];
-// new g_iReturn;
+new g_iReturn;
 
 new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
@@ -164,6 +167,14 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
 
     if(g_bIsLowOnline)
     {
+        ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, LOW_ONLINE);
+
+        if(g_iReturn == AWPL_BREAK)
+        {
+            debug_log(__LINE__, "AWP is allowed by API.");
+            return;
+        }
+
         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
         debug_log(__LINE__, "Player can't take AWP because of low online.");
@@ -175,6 +186,14 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
             g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
         {
+            ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, TOO_MANY_AWP_ON_TEAM);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is allowed by API.");
+                return;
+            }
+
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
             debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
@@ -206,6 +225,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         {
             if(g_bIsLowOnline)
             {
+                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, LOW_ONLINE);
+
+                if(g_iReturn == AWPL_BREAK)
+                {
+                    debug_log(__LINE__, "AWP is allowed by API.");
+                    return;
+                }
+
                 client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
                 debug_log(__LINE__, "Player can't buy AWP because of low online.");
@@ -217,6 +244,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
                     g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
+                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, TOO_MANY_AWP_ON_TEAM);
+
+                    if(g_iReturn == AWPL_BREAK)
+                    {
+                        debug_log(__LINE__, "AWP is allowed by API.");
+                        return;
+                    }
+
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
                     debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
@@ -232,6 +267,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
             if(g_bIsLowOnline)
             {
+                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, LOW_ONLINE);
+
+                if(g_iReturn == AWPL_BREAK)
+                {
+                    debug_log(__LINE__, "AWP is allowed by API.");
+                    return;
+                }
+
                 if(iSendMessage == 0)
                 {
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
@@ -250,6 +293,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
                     g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
+                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, TOO_MANY_AWP_ON_TEAM);
+
+                    if(g_iReturn == AWPL_BREAK)
+                    {
+                        debug_log(__LINE__, "AWP is allowed by API.");
+                        return;
+                    }
+
                     if(iSendMessage == 0)
                     {
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
@@ -657,8 +708,9 @@ IsAwpMap()
 
 CreateAPIForwards()
 {
-    g_iForwardsPointers[LOW_ONLINE_MODE_STARTED] = CreateMultiForward("awpl_low_online_started", ET_IGNORE);
-    g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED] = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]    = CreateMultiForward("awpl_low_online_started", ET_IGNORE);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]    = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
+    g_iForwardsPointers[TRIED_TO_GET_AWP]           = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
 }
 
 public plugin_natives()
