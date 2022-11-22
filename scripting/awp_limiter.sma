@@ -43,7 +43,8 @@ enum _:API_FORWARDS
 {
     LOW_ONLINE_MODE_STARTED,
     LOW_ONLINE_MODE_STOPPED,
-    TRIED_TO_GET_AWP
+    TRIED_TO_GET_AWP,
+    AWP_TAKEN_FROM_PLAYER
 };
 
 new g_iForwardsPointers[API_FORWARDS];
@@ -474,8 +475,18 @@ public CheckOnline()
 
             FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
             {
-                if(rg_remove_item(id, "weapon_awp"))
+                if(user_has_awp(id))
                 {
+                    ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
+
+                    if(g_iReturn == AWPL_BREAK)
+                    {
+                        debug_log(__LINE__, "AWP is not taken from player because of API.");
+                        continue;
+                    }
+
+                    rg_remove_item(id, "weapon_awp");
+
                     g_iAWPAmount[get_member(id, m_iTeam)]--;
 
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
@@ -528,8 +539,18 @@ public CheckOnline()
             {
                 FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "TERRORIST")
                 {
-                    if(rg_remove_item(id, "weapon_awp"))
+                    if(user_has_awp(id))
                     {
+                        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+
+                        if(g_iReturn == AWPL_BREAK)
+                        {
+                            debug_log(__LINE__, "AWP is not taken from player because of API.");
+                            continue;
+                        }
+
+                        rg_remove_item(id, "weapon_awp");
+
                         g_iAWPAmount[TEAM_TERRORIST]--;
 
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
@@ -543,8 +564,18 @@ public CheckOnline()
             {
                 FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "CT")
                 {
-                    if(rg_remove_item(id, "weapon_awp"))
+                    if(user_has_awp(id))
                     {
+                        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+
+                        if(g_iReturn == AWPL_BREAK)
+                        {
+                            debug_log(__LINE__, "AWP is not taken from player because of API.");
+                            continue;
+                        }
+
+                        rg_remove_item(id, "weapon_awp");
+                        
                         g_iAWPAmount[TEAM_CT]--;
 
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
@@ -711,6 +742,7 @@ CreateAPIForwards()
     g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]    = CreateMultiForward("awpl_low_online_started", ET_IGNORE);
     g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]    = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
     g_iForwardsPointers[TRIED_TO_GET_AWP]           = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
+    g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER]      = CreateMultiForward("awpl_awp_taken_from_player", ET_STOP, FP_CELL, FP_CELL);
 }
 
 public plugin_natives()

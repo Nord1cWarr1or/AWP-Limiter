@@ -58,6 +58,17 @@ forward awpl_low_online_stopped();
 forward awpl_player_tried_to_get_awp(const id, AwpGiveType:iGiveType, AwpRestrictionType:iRestrictType);
 
 /**
+ * Called every time an AWP was taken from player.
+ *
+ * @param id            Player index
+ * @param iRestrictType Indicates why the AWP was taken. Look at the enum RESTRICTION_TYPE
+ *
+ * @return              AWPL_CONTINUE to allow an AWP to be taken by main plugin
+ *                      AWPL_BREAK to stop an AWP taking
+ */
+forward awpl_awp_taken_from_player(const id, AwpRestrictionType:iRestrictType);
+
+/**
  * Checks if the low online mode is currently active.
  *
  * @return              True if the low online mode is currently active, false otherwise.
