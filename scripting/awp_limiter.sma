@@ -642,7 +642,10 @@ IsAwpMap()
 
 public plugin_end()
 {
-    log_to_file(g_szLogPach, "================================================================^n");
+    if(g_bIsDebugActive)
+    {
+        log_to_file(g_szLogPach, "================================================================^n");
+    }
 }
 
 stock bool:user_has_awp(const id)
