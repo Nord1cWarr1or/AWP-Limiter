@@ -50,7 +50,7 @@ forward awpl_low_online_stopped();
  *
  * @param id            Player index
  * @param iGiveType     Indicates how the AWP was received. Look at the enum GIVE_TYPE
- * @param iRestrictType Indicates how the AWP was received. Look at the enum RESTRICTION_TYPE
+ * @param iRestrictType Indicates why the AWP was restricted. Look at the enum RESTRICTION_TYPE
  *
  * @return              AWPL_CONTINUE to allow an AWP to be blocked by main plugin
  *                      AWPL_BREAK to stop an AWP blocking
