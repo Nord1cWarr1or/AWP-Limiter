@@ -14,7 +14,7 @@ enum AwpGiveType:GIVE_TYPE
 };
 
 /**
- * For forward awpl_player_tried_to_get_awp
+ * For forwards awpl_player_tried_to_get_awp, awpl_awp_taken_from_player
  */
 enum AwpRestrictionType:RESTRICTION_TYPE
 {
@@ -32,18 +32,20 @@ enum
 };
 
 /**
- * Called just after low online mode is enabled.
+ * Called before the low online mode is activated.
  *
- * @noreturn
+ * @return              AWPL_CONTINUE to allow starting of low online mode
+ *                      AWPL_BREAK to stop starting of low online mode
  */
-forward awpl_low_online_started();
+forward awpl_low_online_start();
 
 /**
- * Called just after low online mode is disabled.
+ * Called before the low online mode is turned off.
  *
- * @noreturn
+ * @return              AWPL_CONTINUE to allow stopping of low online mode
+ *                      AWPL_BREAK to continue low online mode
  */
-forward awpl_low_online_stopped();
+forward awpl_low_online_stop();
 
 /**
  * Called every time a player tries to take an AWP during low online mode.

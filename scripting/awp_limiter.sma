@@ -472,11 +472,17 @@ public CheckOnline()
     {
         if(!g_bIsLowOnline)
         {
+            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STARTED], g_iReturn);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "Low online mode can't start because of API.");
+                goto check_team_limit;
+            }
+
             g_bIsLowOnline = true;
 
             TakeAllAwps();
-
-            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]);
 
             debug_log(__LINE__, "Low online mode has started.");
         }
@@ -487,6 +493,14 @@ public CheckOnline()
     {
         if(g_bIsLowOnline)
         {
+            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED], g_iReturn);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "Low online mode can't stop because of API.");
+                return;
+            }
+
             g_bIsLowOnline = false;
 
             if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
@@ -494,11 +508,11 @@ public CheckOnline()
                 client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
             }
 
-            ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]);
-
             debug_log(__LINE__, "Low online mode has stopped.");
         }
     }
+
+    check_team_limit:
 
     switch(g_pCvarValue[LIMIT_TYPE])
     {
@@ -735,8 +749,8 @@ IsAwpMap()
 
 CreateAPIForwards()
 {
-    g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]    = CreateMultiForward("awpl_low_online_started", ET_IGNORE);
-    g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]    = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]    = CreateMultiForward("awpl_low_online_started", ET_STOP);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]    = CreateMultiForward("awpl_low_online_stopped", ET_STOP);
     g_iForwardsPointers[TRIED_TO_GET_AWP]           = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
     g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER]      = CreateMultiForward("awpl_awp_taken_from_player", ET_STOP, FP_CELL, FP_CELL);
     g_iForwardsPointers[GIVE_COMPENSATION_FW]       = CreateMultiForward("awpl_give_compensation", ET_STOP, FP_CELL);
