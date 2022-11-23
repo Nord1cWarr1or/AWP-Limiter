@@ -473,27 +473,7 @@ public CheckOnline()
         {
             g_bIsLowOnline = true;
 
-            FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
-            {
-                if(user_has_awp(id))
-                {
-                    ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
-
-                    if(g_iReturn == AWPL_BREAK)
-                    {
-                        debug_log(__LINE__, "AWP is not taken from player because of API.");
-                        continue;
-                    }
-
-                    rg_remove_item(id, "weapon_awp");
-
-                    g_iAWPAmount[get_member(id, m_iTeam)]--;
-
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
-
-                    GiveCompensation(id);
-                }
-            }
+            TakeAllAwps();
 
             ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STARTED]);
 
@@ -537,53 +517,63 @@ public CheckOnline()
 
             if(g_iAWPAmount[TEAM_TERRORIST] > g_iNumAllowedAWP)
             {
-                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "TERRORIST")
-                {
-                    if(user_has_awp(id))
-                    {
-                        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
-
-                        if(g_iReturn == AWPL_BREAK)
-                        {
-                            debug_log(__LINE__, "AWP is not taken from player because of API.");
-                            continue;
-                        }
-
-                        rg_remove_item(id, "weapon_awp");
-
-                        g_iAWPAmount[TEAM_TERRORIST]--;
-
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
-
-                        GiveCompensation(id);
-                    }
-                }
+                TakeAwpsFromTeam(TEAM_TERRORIST);
             }
 
             if(g_iAWPAmount[TEAM_CT] > g_iNumAllowedAWP)
             {
-                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "CT")
-                {
-                    if(user_has_awp(id))
-                    {
-                        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
-
-                        if(g_iReturn == AWPL_BREAK)
-                        {
-                            debug_log(__LINE__, "AWP is not taken from player because of API.");
-                            continue;
-                        }
-
-                        rg_remove_item(id, "weapon_awp");
-                        
-                        g_iAWPAmount[TEAM_CT]--;
-
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
-
-                        GiveCompensation(id);
-                    }
-                }
+                TakeAwpsFromTeam(TEAM_CT);
             }
+        }
+    }
+}
+
+TakeAllAwps()
+{
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
+    {
+        if(user_has_awp(id))
+        {
+            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is not taken from player because of API.");
+                continue;
+            }
+
+            rg_remove_item(id, "weapon_awp");
+
+            // g_iAWPAmount[get_member(id, m_iTeam)]--;
+
+            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
+
+            GiveCompensation(id);
+        }
+    }
+}
+
+TakeAwpsFromTeam(TeamName:iTeam)
+{
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT")
+    {
+        if(user_has_awp(id))
+        {
+            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is not taken from player because of API.");
+                continue;
+            }
+
+            rg_remove_item(id, "weapon_awp");
+
+            // g_iAWPAmount[iTeam]--;
+
+            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
+
+            GiveCompensation(id);
         }
     }
 }
