@@ -86,4 +86,4 @@ forward awpl_give_compensation(const id);
  *
  * @return              True if the low online mode is currently active, false otherwise.
  */
-native awpl_is_low_online();
+native bool:awpl_is_low_online();
