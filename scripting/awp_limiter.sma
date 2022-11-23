@@ -44,7 +44,8 @@ enum _:API_FORWARDS
     LOW_ONLINE_MODE_STARTED,
     LOW_ONLINE_MODE_STOPPED,
     TRIED_TO_GET_AWP,
-    AWP_TAKEN_FROM_PLAYER
+    AWP_TAKEN_FROM_PLAYER,
+    GIVE_COMPENSATION_FW
 };
 
 new g_iForwardsPointers[API_FORWARDS];
@@ -544,7 +545,7 @@ TakeAllAwps()
 
             rg_remove_item(id, "weapon_awp");
 
-            // g_iAWPAmount[get_member(id, m_iTeam)]--;
+            g_iAWPAmount[get_member(id, m_iTeam)]--;
 
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
 
@@ -569,7 +570,7 @@ TakeAwpsFromTeam(TeamName:iTeam)
 
             rg_remove_item(id, "weapon_awp");
 
-            // g_iAWPAmount[iTeam]--;
+            g_iAWPAmount[iTeam]--;
 
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
 
@@ -581,6 +582,11 @@ TakeAwpsFromTeam(TeamName:iTeam)
 GiveCompensation(const id)
 {
     if(!g_pCvarValue[GIVE_COMPENSATION])
+        return;
+
+    ExecuteForward(g_iForwardsPointers[GIVE_COMPENSATION_FW], g_iReturn, id);
+
+    if(g_iReturn == AWPL_BREAK)
         return;
     
     switch(g_pCvarValue[GIVE_COMPENSATION])
@@ -733,6 +739,7 @@ CreateAPIForwards()
     g_iForwardsPointers[LOW_ONLINE_MODE_STOPPED]    = CreateMultiForward("awpl_low_online_stopped", ET_IGNORE);
     g_iForwardsPointers[TRIED_TO_GET_AWP]           = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
     g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER]      = CreateMultiForward("awpl_awp_taken_from_player", ET_STOP, FP_CELL, FP_CELL);
+    g_iForwardsPointers[GIVE_COMPENSATION_FW]       = CreateMultiForward("awpl_give_compensation", ET_STOP, FP_CELL);
 }
 
 public plugin_natives()

@@ -69,6 +69,19 @@ forward awpl_player_tried_to_get_awp(const id, AwpGiveType:iGiveType, AwpRestric
 forward awpl_awp_taken_from_player(const id, AwpRestrictionType:iRestrictType);
 
 /**
+ * Called when a player receives compensation for a taken AWP.
+ *
+ * @note This forward only called when "awpl_give_compensation" CVar is active.
+ * @note You can use this forward for give your own compensation to players.
+ *
+ * @param id            Player index
+ *
+ * @return              AWPL_CONTINUE to allow giving compensation by main plugin
+ *                      AWPL_BREAK to stop giving compensation
+ */
+forward awpl_give_compensation(const id);
+
+/**
  * Checks if the low online mode is currently active.
  *
  * @return              True if the low online mode is currently active, false otherwise.
