@@ -565,6 +565,8 @@ CheckTeamLimit()
 
 TakeAllAwps()
 {
+    new TeamName:iUserTeam;
+
     FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
     {
         if(user_has_awp(id))
@@ -579,11 +581,15 @@ TakeAllAwps()
 
             rg_remove_item(id, "weapon_awp");
 
-            g_iAWPAmount[get_member(id, m_iTeam)]--;
+            iUserTeam = get_member(id, m_iTeam);
+
+            g_iAWPAmount[iUserTeam]--;
 
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
 
             GiveCompensation(id);
+
+            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
         }
     }
 }
@@ -609,6 +615,8 @@ TakeAwpsFromTeam(TeamName:iTeam)
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
 
             GiveCompensation(id);
+
+            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iTeam], iTeam);
         }
     }
 }
