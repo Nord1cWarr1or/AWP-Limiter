@@ -89,3 +89,16 @@ forward awpl_give_compensation(const id);
  * @return              True if the low online mode is currently active, false otherwise.
  */
 native bool:awpl_is_low_online();
+
+/**
+ * Forced to start or stop low online mode.
+ *
+ * @note The mode setted by this native will be active only
+ *       until next online check.
+ * @note Using this native will cause an immediate awp to be taken if low online mide is set to true.
+ *
+ * @param bSet          Determines whether to start or stop low online mode.
+ *
+ * @noreturn
+ */
+native awpl_set_low_online(bool:bSet);
