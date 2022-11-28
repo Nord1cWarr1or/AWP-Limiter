@@ -2,7 +2,9 @@
 #include <amxmisc>
 #include <reapi>
 
-new const PLUGIN_VERSION[] = "1.0.0 Beta";
+#include <awp_limiter_n>
+
+new const PLUGIN_VERSION[] = "1.1.0 Beta";
 
 #pragma semicolon 1
 
@@ -37,12 +39,25 @@ enum _:Cvars
 
 new g_pCvarValue[Cvars];
 
+enum _:API_FORWARDS
+{
+    LOW_ONLINE_MODE_START,
+    LOW_ONLINE_MODE_STOP,
+    TRIED_TO_GET_AWP,
+    AWP_TAKEN_FROM_PLAYER,
+    GIVE_COMPENSATION_FW
+};
+
+new g_iForwardsPointers[API_FORWARDS];
+new g_iReturn;
+
 new bool:g_bIsLowOnline = true;
 new g_iAWPAmount[TeamName];
 new HookChain:g_iHookChain_RoundEnd;
 new HookChain:g_iHookChain_PlayerSpawn;
 new g_bitImmunityFlags;
 new g_iNumAllowedAWP;
+new g_iOnlinePlayers;
 
 new bool:IsUserBot[MAX_PLAYERS + 1];
 
@@ -80,6 +95,8 @@ public plugin_init()
     CreateCvars();
 
     AutoExecConfig(.name = "AWPLimiter");
+
+    CreateAPIForwards();
 
     /* <== DEBUG ==> */
 
@@ -153,6 +170,14 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
 
     if(g_bIsLowOnline)
     {
+        ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, LOW_ONLINE);
+
+        if(g_iReturn == AWPL_BREAK)
+        {
+            debug_log(__LINE__, "AWP is allowed by API.");
+            return;
+        }
+
         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
         debug_log(__LINE__, "Player can't take AWP because of low online.");
@@ -164,6 +189,14 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
             g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
         {
+            ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, TOO_MANY_AWP_ON_TEAM);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is allowed by API.");
+                return;
+            }
+
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
             debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
@@ -195,6 +228,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         {
             if(g_bIsLowOnline)
             {
+                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, LOW_ONLINE);
+
+                if(g_iReturn == AWPL_BREAK)
+                {
+                    debug_log(__LINE__, "AWP is allowed by API.");
+                    return;
+                }
+
                 client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
 
                 debug_log(__LINE__, "Player can't buy AWP because of low online.");
@@ -206,6 +247,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
                     g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
+                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, TOO_MANY_AWP_ON_TEAM);
+
+                    if(g_iReturn == AWPL_BREAK)
+                    {
+                        debug_log(__LINE__, "AWP is allowed by API.");
+                        return;
+                    }
+
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
                     debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
@@ -221,6 +270,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
             if(g_bIsLowOnline)
             {
+                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, LOW_ONLINE);
+
+                if(g_iReturn == AWPL_BREAK)
+                {
+                    debug_log(__LINE__, "AWP is allowed by API.");
+                    return;
+                }
+
                 if(iSendMessage == 0)
                 {
                     client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
@@ -239,6 +296,14 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                 if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
                     g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
                 {
+                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, TOO_MANY_AWP_ON_TEAM);
+
+                    if(g_iReturn == AWPL_BREAK)
+                    {
+                        debug_log(__LINE__, "AWP is allowed by API.");
+                        return;
+                    }
+
                     if(iSendMessage == 0)
                     {
                         client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
@@ -386,43 +451,21 @@ public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmD
 
 public CheckOnline()
 {
-    new iNumCT = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "CT");
-    new iNumTE = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "TERRORIST");
+    GetOnlinePlayers();
 
-    new iOnlinePlayers = iNumCT + iNumTE;
+    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", g_iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
-    if(!g_pCvarValue[SKIP_SPECTATORS])
-    {
-        iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
-    }
-
-    debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
-
-    if(!iOnlinePlayers)
+    if(!g_iOnlinePlayers)
     {
         g_bIsLowOnline = true;
         return;
     }
 
-    if(iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
+    if(g_iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
     {
         if(!g_bIsLowOnline)
         {
-            g_bIsLowOnline = true;
-
-            FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
-            {
-                if(rg_remove_item(id, "weapon_awp"))
-                {
-                    g_iAWPAmount[get_member(id, m_iTeam)]--;
-
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
-
-                    GiveCompensation(id);
-                }
-            }
-
-            debug_log(__LINE__, "Low online mode has started.");
+            SetLowOnlineMode();
         }
 
         return;
@@ -431,23 +474,72 @@ public CheckOnline()
     {
         if(g_bIsLowOnline)
         {
-            g_bIsLowOnline = false;
-
-            if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
-            {
-                client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
-            }
-
-            debug_log(__LINE__, "Low online mode has stopped.");
+            UnsetLowOnlineMode();
         }
     }
 
+    CheckTeamLimit();
+}
+
+GetOnlinePlayers()
+{
+    new iNumCT = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "CT");
+    new iNumTE = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "TERRORIST");
+
+    g_iOnlinePlayers = iNumCT + iNumTE;
+
+    if(!g_pCvarValue[SKIP_SPECTATORS])
+    {
+        g_iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
+    }
+}
+
+SetLowOnlineMode()
+{
+    ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_START], g_iReturn);
+
+    if(g_iReturn == AWPL_BREAK)
+    {
+        debug_log(__LINE__, "Low online mode can't start because of API.");
+        CheckTeamLimit();
+        return;
+    }
+
+    g_bIsLowOnline = true;
+
+    TakeAllAwps();
+
+    debug_log(__LINE__, "Low online mode has started.");
+}
+
+UnsetLowOnlineMode()
+{
+    ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STOP], g_iReturn);
+
+    if(g_iReturn == AWPL_BREAK)
+    {
+        debug_log(__LINE__, "Low online mode can't stop because of API.");
+        return;
+    }
+
+    g_bIsLowOnline = false;
+
+    if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
+    {
+        client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
+    }
+
+    debug_log(__LINE__, "Low online mode has stopped.");
+}
+
+CheckTeamLimit()
+{
     switch(g_pCvarValue[LIMIT_TYPE])
     {
         case 1: debug_log(__LINE__, "Limit type: 1. Max AWP per team: %i", g_pCvarValue[MAX_AWP]);
         case 2:
         {
-            g_iNumAllowedAWP = floatround(iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
+            g_iNumAllowedAWP = floatround(g_iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
 
             debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated num of max AWP per team: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
 
@@ -460,33 +552,71 @@ public CheckOnline()
 
             if(g_iAWPAmount[TEAM_TERRORIST] > g_iNumAllowedAWP)
             {
-                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "TERRORIST")
-                {
-                    if(rg_remove_item(id, "weapon_awp"))
-                    {
-                        g_iAWPAmount[TEAM_TERRORIST]--;
-
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
-
-                        GiveCompensation(id);
-                    }
-                }
+                TakeAwpsFromTeam(TEAM_TERRORIST);
             }
 
             if(g_iAWPAmount[TEAM_CT] > g_iNumAllowedAWP)
             {
-                FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), "CT")
-                {
-                    if(rg_remove_item(id, "weapon_awp"))
-                    {
-                        g_iAWPAmount[TEAM_CT]--;
-
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
-
-                        GiveCompensation(id);
-                    }
-                }
+                TakeAwpsFromTeam(TEAM_CT);
             }
+        }
+    }
+}
+
+TakeAllAwps()
+{
+    new TeamName:iUserTeam;
+
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
+    {
+        if(user_has_awp(id))
+        {
+            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is not taken from player because of API.");
+                continue;
+            }
+
+            rg_remove_item(id, "weapon_awp");
+
+            iUserTeam = get_member(id, m_iTeam);
+
+            g_iAWPAmount[iUserTeam]--;
+
+            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
+
+            GiveCompensation(id);
+
+            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
+        }
+    }
+}
+
+TakeAwpsFromTeam(TeamName:iTeam)
+{
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT")
+    {
+        if(user_has_awp(id))
+        {
+            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+
+            if(g_iReturn == AWPL_BREAK)
+            {
+                debug_log(__LINE__, "AWP is not taken from player because of API.");
+                continue;
+            }
+
+            rg_remove_item(id, "weapon_awp");
+
+            g_iAWPAmount[iTeam]--;
+
+            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
+
+            GiveCompensation(id);
+
+            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iTeam], iTeam);
         }
     }
 }
@@ -494,6 +624,11 @@ public CheckOnline()
 GiveCompensation(const id)
 {
     if(!g_pCvarValue[GIVE_COMPENSATION])
+        return;
+
+    ExecuteForward(g_iForwardsPointers[GIVE_COMPENSATION_FW], g_iReturn, id);
+
+    if(g_iReturn == AWPL_BREAK)
         return;
     
     switch(g_pCvarValue[GIVE_COMPENSATION])
@@ -638,6 +773,45 @@ IsAwpMap()
     }
 
     return false;
+}
+
+CreateAPIForwards()
+{
+    g_iForwardsPointers[LOW_ONLINE_MODE_START]  = CreateMultiForward("awpl_low_online_start", ET_STOP);
+    g_iForwardsPointers[LOW_ONLINE_MODE_STOP]   = CreateMultiForward("awpl_low_online_stop", ET_STOP);
+    g_iForwardsPointers[TRIED_TO_GET_AWP]       = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
+    g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER]  = CreateMultiForward("awpl_awp_taken_from_player", ET_STOP, FP_CELL, FP_CELL);
+    g_iForwardsPointers[GIVE_COMPENSATION_FW]   = CreateMultiForward("awpl_give_compensation", ET_STOP, FP_CELL);
+}
+
+public plugin_natives()
+{
+    register_native("awpl_is_low_online", "native_awpl_is_low_online");
+    register_native("awpl_set_low_online", "native_awpl_set_low_online");
+}
+
+public native_awpl_is_low_online(iPlugin, iParams)
+{
+    return g_bIsLowOnline;
+}
+
+public native_awpl_set_low_online(iPlugin, iParams)
+{
+    new bool:bSet = bool:get_param(1);
+
+    GetOnlinePlayers();
+
+    if(bSet)
+    {
+        debug_log(__LINE__, "Low online mode is set via native.");
+        SetLowOnlineMode();
+    }
+    else
+    {
+        debug_log(__LINE__, "Low online mode is unset via native.");
+        UnsetLowOnlineMode();
+        CheckTeamLimit();
+    }
 }
 
 public plugin_end()
