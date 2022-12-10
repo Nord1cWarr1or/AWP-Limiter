@@ -617,6 +617,9 @@ TakeAwpsFromTeam(TeamName:iTeam)
             GiveCompensation(id);
 
             debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iTeam], iTeam);
+
+            if(g_iAWPAmount[iTeam] <= g_iNumAllowedAWP)
+                break;
         }
     }
 }
