@@ -596,6 +596,8 @@ TakeAllAwps()
 
 TakeAwpsFromTeam(TeamName:iTeam)
 {
+    debug_log(__LINE__, "<TakeAwpsFromTeam> called for %i team.", iTeam);
+
     FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT")
     {
         if(user_has_awp(id))
@@ -610,13 +612,9 @@ TakeAwpsFromTeam(TeamName:iTeam)
 
             rg_remove_item(id, "weapon_awp");
 
-            g_iAWPAmount[iTeam]--;
-
             client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
 
             GiveCompensation(id);
-
-            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iTeam], iTeam);
 
             if(g_iAWPAmount[iTeam] <= g_iNumAllowedAWP)
                 break;
