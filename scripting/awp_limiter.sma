@@ -14,6 +14,8 @@ new const PLUGIN_VERSION[] = "1.1.1 Beta";
     get_players_ex(__players, %0, %2, %3); \
     for (new i, %1 = __players[i]; i < %0; %1 = __players[++i])
 
+#define GetCvarDesc(%0) fmt("%L", LANG_SERVER, %0)
+
 #if !defined MAX_MAPNAME_LENGTH
 const MAX_MAPNAME_LENGTH = 32;
 #endif
@@ -24,6 +26,7 @@ const TASKID__CHECK_ONLINE = 10200;
 
 enum _:Cvars
 {
+    PLUGIN_CHAT_PREFIX[32],
     MIN_PLAYERS,
     MAX_AWP,
     LIMIT_TYPE,
@@ -79,6 +82,8 @@ public plugin_init()
 
         return;
     }
+
+    register_dictionary("awp_limiter_n.txt");
 
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
     RegisterHookChain(RG_CBasePlayer_HasRestrictItem,       "RG_CBasePlayer_HasRestrictItem_pre",       .post = false);
@@ -168,6 +173,8 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         return;
     }
 
+    SetGlobalTransTarget(id);
+
     if(g_bIsLowOnline)
     {
         ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, LOW_ONLINE);
@@ -178,7 +185,7 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
             return;
         }
 
-        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
+        client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
 
         debug_log(__LINE__, "Player can't take AWP because of low online.");
 
@@ -197,7 +204,7 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
                 return;
             }
 
-            client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+            client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
             debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
 
@@ -222,6 +229,8 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         return;
     }
 
+    SetGlobalTransTarget(id);
+
     switch(type)
     {
         case ITEM_TYPE_BUYING:
@@ -236,7 +245,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                     return;
                 }
 
-                client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы купить ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
+                client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
 
                 debug_log(__LINE__, "Player can't buy AWP because of low online.");
 
@@ -255,7 +264,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
                         return;
                     }
 
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+                    client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
                     debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
 
@@ -280,7 +289,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
                 if(iSendMessage == 0)
                 {
-                    client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.%s", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? " ^3(без учёта зрителей)" : "");
+                    client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
                 }
                 else if(iSendMessage > 100)
                 {
@@ -306,7 +315,7 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
                     if(iSendMessage == 0)
                     {
-                        client_print_color(id, print_team_red, "^3[^4AWP^3] ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+                        client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
 
                         debug_log(__LINE__, "Player can't take AWP from ground because of it's too much in team.");
                     }
@@ -526,7 +535,7 @@ UnsetLowOnlineMode()
 
     if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
     {
-        client_print_color(0, print_team_blue, "^3[^4AWP^3] ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.");
+        client_print_color(0, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_BECAME_AVALIABLE");
     }
 
     debug_log(__LINE__, "Low online mode has stopped.");
@@ -585,7 +594,7 @@ TakeAllAwps()
 
             g_iAWPAmount[iUserTeam]--;
 
-            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3низкий онлайн^1.");
+            client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_LOW_ONLINE");
 
             GiveCompensation(id);
 
@@ -612,7 +621,7 @@ TakeAwpsFromTeam(TeamName:iTeam)
 
             rg_remove_item(id, "weapon_awp");
 
-            client_print_color(id, print_team_red, "^3[^4AWP^3] ^1У вас ^3отобрано ^4AWP^1. Причина: ^3слишком много AWP в команде^1.");
+            client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_TOO_MANY_AWP_PER_TEAM");
 
             GiveCompensation(id);
 
@@ -647,12 +656,12 @@ GiveCompensation(const id)
                 rg_set_user_bpammo(id, WEAPON_M4A1, 90);
             }
 
-            client_print_color(id, print_team_blue, "^3[^4AWP^3] ^1Вам ^3выдана ^4винтовка ^1в качестве ^3компенсации^1.");
+            client_print_color(id, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_COMPENSATION_RIFLE");
         }
         default:
         {
             rg_add_account(id, g_pCvarValue[GIVE_COMPENSATION]);
-            client_print_color(id, print_team_blue, "^3[^4AWP^3] ^1Вам ^3выдана компенсация ^1в размере ^3%i^4$", g_pCvarValue[GIVE_COMPENSATION]);
+            client_print_color(id, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_COMPENSATION_MONEY", g_pCvarValue[GIVE_COMPENSATION]);
         }
     }
 }
@@ -661,27 +670,31 @@ CreateCvars()
 {
     new pCvar;
 
+    bind_pcvar_string(create_cvar("awpl_chat_prefix", "^3[^4AWP^3]",
+        .description = "Plugin prefix."),
+    g_pCvarValue[PLUGIN_CHAT_PREFIX], charsmax(g_pCvarValue[PLUGIN_CHAT_PREFIX]));
+
     bind_pcvar_num(create_cvar("awpl_min_players", "10",
-        .description = "Минимальное кол-во игроков, при котором станут доступны AWP"),
+        .description = GetCvarDesc("CVAR_MIN_PLAYERS")),
     g_pCvarValue[MIN_PLAYERS]);
 
     bind_pcvar_num(create_cvar("awpl_limit_type", "1",
-        .description = "Тип лимита AWP.^n1 — Точное кол-во AWP на команду^n2 — Процент от онлайн игроков (awpl_percent_players)",
+        .description = GetCvarDesc("CVAR_LIMIT_TYPE"),
         .has_min = true, .min_val = 1.0,
         .has_max = true, .max_val = 2.0),
     g_pCvarValue[LIMIT_TYPE]);
 
     bind_pcvar_num(create_cvar("awpl_max_awp", "2",
-        .description = "Максимальное кол-во AWP на команду, при awpl_limit_type = 1",
+        .description = GetCvarDesc("CVAR_MAX_AWP"),
         .has_min = true, .min_val = 1.0),
     g_pCvarValue[MAX_AWP]);
 
     bind_pcvar_num(create_cvar("awpl_percent_players", "10",
-        .description = "Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% — при онлайне 20 чел. доступно 2 AWP на команду"),
+        .description = GetCvarDesc("CVAR_PERCENT_PLAYERS")),
     g_pCvarValue[PERCENT_PLAYERS]);
 
     bind_pcvar_string(pCvar = create_cvar("awpl_immunity_flag", "a",
-        .description = "Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета"),
+        .description = GetCvarDesc("CVAR_IMMUNITY_FLAG")),
     g_pCvarValue[IMMNUNITY_FLAG], charsmax(g_pCvarValue[IMMNUNITY_FLAG]));
 
     hook_cvar_change(pCvar, "OnChangeCvar_Immunity");
@@ -691,32 +704,32 @@ CreateCvars()
     // g_pCvarValue[IMMUNITY_TYPE], charsmax(g_pCvarValue[IMMUNITY_TYPE]));
 
     bind_pcvar_num(create_cvar("awpl_skip_bots", "0",
-        .description = "Пропуск подсчёта авп у ботов.^n0 — Выключен^n1 — Включен",
+        .description = GetCvarDesc("CVAR_SKIP_BOTS"),
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_BOTS]);
 
     bind_pcvar_num(create_cvar("awpl_skip_spectators", "1",
-        .description = "Пропуск зрителей при подсчёте онлайна.^n0 — Выключен^n1 — Включен",
+        .description = GetCvarDesc("CVAR_SKIP_SPECTATORS"),
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[SKIP_SPECTATORS]);
 
     bind_pcvar_num(create_cvar("awpl_message_allow_awp", "1",
-        .description = "Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 — Выключено^n1 — Включено",
+        .description = GetCvarDesc("CVAR_MESSAGE_AWLLOW_AWP"),
         .has_min = true, .min_val = 0.0,
         .has_max = true, .max_val = 1.0),
     g_pCvarValue[MESSAGE_ALLOWED_AWP]);
 
     bind_pcvar_num(pCvar = create_cvar("awpl_round_infinite", "0",
-        .description = "Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n>= 1 — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока",
+        .description = GetCvarDesc("CVAR_ROUND_INFINITE"),
         .has_min = true, .min_val = -1.0),
     g_pCvarValue[ROUND_INFINITE]);
 
     hook_cvar_change(pCvar, "OnChangeCvar_RoundInfinite");
 
     bind_pcvar_num(create_cvar("awpl_give_compensation", "-1",
-        .description = "Выдача компенсации за отобранное AWP при понижении онлайна.^n-1 — AK-47 или M4A1.^n0 — Выключено^n> 1 — Указаное количество денег.",
+        .description = GetCvarDesc("CVAR_GIVE_COMPENSATION"),
         .has_min = true, .min_val = -1.0),
     g_pCvarValue[GIVE_COMPENSATION]);
 }
