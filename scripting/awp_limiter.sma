@@ -173,11 +173,11 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
         return;
     }
 
-    SetGlobalTransTarget(id);
+    new AwpRestrictionType:iReason;
 
-    if(g_bIsLowOnline)
+    if(!PlayerCanTakeAWP(id, iReason))
     {
-        ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, LOW_ONLINE);
+        ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, iReason);
 
         if(g_iReturn == AWPL_BREAK)
         {
@@ -185,31 +185,11 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
             return;
         }
 
-        client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
+        debug_log(__LINE__, "Player can't take AWP because of %s.", iReason == LOW_ONLINE ? "low online" : "it's too much in team");
 
-        debug_log(__LINE__, "Player can't take AWP because of low online.");
+        SendReasonToPlayer(id, iReason);
 
         SetHookChainReturn(ATYPE_INTEGER, false);
-    }
-    else
-    {
-        if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
-            g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
-        {
-            ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, TOO_MANY_AWP_ON_TEAM);
-
-            if(g_iReturn == AWPL_BREAK)
-            {
-                debug_log(__LINE__, "AWP is allowed by API.");
-                return;
-            }
-
-            client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
-
-            debug_log(__LINE__, "Player can't take AWP because of it's too much in team.");
-
-            SetHookChainReturn(ATYPE_INTEGER, false);
-        }
     }
 }
 
@@ -221,6 +201,9 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(user_has_awp(id))
         return;
 
+    if(type == ITEM_TYPE_TOUCHED && get_member(id, m_bHasPrimary))
+        return;
+
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
@@ -229,112 +212,88 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
         return;
     }
 
-    SetGlobalTransTarget(id);
-
-    switch(type)
+    if(type == ITEM_TYPE_EQUIPPED)
     {
-        case ITEM_TYPE_BUYING:
+        log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", g_szMapName);
+        pause("ad");
+
+        return;
+    }
+
+    new AwpRestrictionType:iReason;
+
+    if(!PlayerCanTakeAWP(id, iReason))
+    {
+        ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, type == ITEM_TYPE_BUYING ? BUY : TOUCH, iReason);
+
+        if(g_iReturn == AWPL_BREAK)
         {
-            if(g_bIsLowOnline)
-            {
-                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, LOW_ONLINE);
-
-                if(g_iReturn == AWPL_BREAK)
-                {
-                    debug_log(__LINE__, "AWP is allowed by API.");
-                    return;
-                }
-
-                client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
-
-                debug_log(__LINE__, "Player can't buy AWP because of low online.");
-
-                SetHookChainReturn(ATYPE_BOOL, true);
-            }
-            else
-            {
-                if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
-                    g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
-                {
-                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, BUY, TOO_MANY_AWP_ON_TEAM);
-
-                    if(g_iReturn == AWPL_BREAK)
-                    {
-                        debug_log(__LINE__, "AWP is allowed by API.");
-                        return;
-                    }
-
-                    client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
-
-                    debug_log(__LINE__, "Player can't buy AWP because of it's too much in team.");
-
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                }
-            }
+            debug_log(__LINE__, "AWP is allowed by API.");
+            return;
         }
-        case ITEM_TYPE_TOUCHED:
+
+        SetHookChainReturn(ATYPE_BOOL, true);
+
+        if(type == ITEM_TYPE_TOUCHED)
         {
-            static iSendMessage = -1;
-            iSendMessage++;
+            static Float:flGameTime; flGameTime = get_gametime();
+            static Float:flNextMessageTime;
 
-            if(g_bIsLowOnline)
+            if(flGameTime >= flNextMessageTime)
             {
-                ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, LOW_ONLINE);
+                SendReasonToPlayer(id, iReason);
+                debug_log(__LINE__, "Player can't take AWP because of %s.", iReason == LOW_ONLINE ? "low online" : "it's too much in team");
 
-                if(g_iReturn == AWPL_BREAK)
-                {
-                    debug_log(__LINE__, "AWP is allowed by API.");
-                    return;
-                }
-
-                if(iSendMessage == 0)
-                {
-                    client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
-                }
-                else if(iSendMessage > 100)
-                {
-                    iSendMessage = -1;
-                }
-
-                debug_log(__LINE__, "Player can't take AWP from ground because of low online.");
-
-                SetHookChainReturn(ATYPE_BOOL, true);
+                flNextMessageTime = flGameTime + 1.0;
             }
-            else
-            {
-                if(g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP] || \
-                    g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
-                {
-                    ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, TOUCH, TOO_MANY_AWP_ON_TEAM);
-
-                    if(g_iReturn == AWPL_BREAK)
-                    {
-                        debug_log(__LINE__, "AWP is allowed by API.");
-                        return;
-                    }
-
-                    if(iSendMessage == 0)
-                    {
-                        client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
-
-                        debug_log(__LINE__, "Player can't take AWP from ground because of it's too much in team.");
-                    }
-                    else if(iSendMessage > 100)
-                    {
-                        iSendMessage = -1;
-                    }
-
-                    SetHookChainReturn(ATYPE_BOOL, true);
-                }
-            }
-        }
-        case ITEM_TYPE_EQUIPPED: 
-        {
-            log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", g_szMapName);
-            pause("ad");
 
             return;
         }
+
+        SendReasonToPlayer(id, iReason);
+        debug_log(__LINE__, "Player can't take AWP because of %s.", iReason == LOW_ONLINE ? "low online" : "it's too much in team");
+    }
+}
+
+PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED)
+{
+    if(g_bIsLowOnline)
+    {
+        iReason = LOW_ONLINE;
+        return false;
+    }
+   
+    switch(g_pCvarValue[LIMIT_TYPE])
+    {
+        case 1:
+        {
+            if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
+            {
+                iReason = TOO_MANY_AWP_ON_TEAM;
+                return false;
+            }
+        }
+        case 2:
+        {
+            if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
+            {
+                iReason = TOO_MANY_AWP_ON_TEAM;
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+SendReasonToPlayer(id, AwpRestrictionType:iReason)
+{
+    SetGlobalTransTarget(id);
+
+    switch(iReason)
+    {
+        case LOW_ONLINE: client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
+        case TOO_MANY_AWP_ON_TEAM: client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
     }
 }
 
