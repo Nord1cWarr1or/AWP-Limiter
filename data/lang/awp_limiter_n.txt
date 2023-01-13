@@ -1,0 +1,104 @@
+[en]
+CHAT_LOW_ONLINE                     = ^3Not enough players on the server , ^1to take ^4AWP^1. Required: ^4%i^1.
+CHAT_WITHOUT_SPECTATORS             = ^3(excluding spectators)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3Too many ^4AWP ^3in the team. ^1Maximum: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1Your ^4AWP^1has been taken away. Reason:
+CHAT_REASON_LOW_ONLINE              = ^3low online^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3too many AWPs in the team^1.
+CHAT_AWP_BECAME_AVALIABLE           = ^1The necessary online ^3is achieved^1, ^3you can take ^4the AWP^1.
+CHAT_COMPENSATION_RIFLE             = ^1You are ^3given ^4a rifle ^3as compensation^1.
+CHAT_COMPENSATION_MONEY             = ^1You ^3have been given compensation ^1in the amount of ^3%i^4$
+CVAR_MIN_PLAYERS                    = The minimum number of players at which AWPs will become available
+CVAR_LIMIT_TYPE                     = AWP limit type.^n1 - Exact number of AWPs per team^n2 - Percentage of online players (awpl_percent_players)
+CVAR_MAX_AWP                        = The maximum number of AWPs per team, with awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = Percentage of online players for awpl_limit_type = 2^nFor example, with 10% - with 20 people online. 2 AWP available per team
+CVAR_IMMUNITY_FLAG                  = Immunity flag^nLeave blank to disable immunity
+CVAR_SKIP_BOTS                      = Skip AWP counting for bots.^n0 — Disabled^n1 — Enabled
+CVAR_SKIP_SPECTATORS                = Skipping spectators when counting online.^n0 - Disabled^n1 - Enabled
+CVAR_MESSAGE_AWLLOW_AWP             = Send a message that AWP is available again when meeting the required online players?^n0 - Disabled^n1 - Enabled
+CVAR_ROUND_INFINITE                 = Endless round support. (CSDM)^n0 - Disabled^n>= 1 - Check online every N seconds^n-1 - every spawn of any player
+CVAR_GIVE_COMPENSATION              = Issuing compensation for the selected AWP when online is downgraded.^n-1 - AK-47 or M4A1.^n0 - Disabled^n> 1 - Specified amount of money.
+
+[ru]
+CHAT_LOW_ONLINE                     = ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.
+CHAT_WITHOUT_SPECTATORS             = ^3(без учёта зрителей)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3Слишком много ^4AWP ^3в команде. ^1Максимально: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1У вас ^3отобрано ^4AWP^1. Причина:
+CHAT_REASON_LOW_ONLINE              = ^3низкий онлайн^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3слишком много AWP в команде^1.
+CHAT_AWP_BECAME_AVALIABLE           = ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.
+CHAT_COMPENSATION_RIFLE             = ^1Вам ^3выдана ^4винтовка ^1в качестве ^3компенсации^1.
+CHAT_COMPENSATION_MONEY             = ^1Вам ^3выдана компенсация ^1в размере ^3%i^4$
+CVAR_MIN_PLAYERS                    = Минимальное количество игроков, при котором станут доступны AWP
+CVAR_LIMIT_TYPE                     = Тип лимита AWP.^n1 — Точное кол-во AWP на команду^n2 — Процент от онлайн игроков (awpl_percent_players)
+CVAR_MAX_AWP                        = Максимальное кол-во AWP на команду, при awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = Процент от онлайн игроков для awpl_limit_type = 2^nНапример, при 10% — при онлайне 20 чел. доступно 2 AWP на команду
+CVAR_IMMUNITY_FLAG                  = Флаг иммунитета^nОставьте значение пустым, для отключения иммунитета
+CVAR_SKIP_BOTS                      = Пропуск подсчёта авп у ботов.^n0 — Выключен^n1 — Включен
+CVAR_SKIP_SPECTATORS                = Пропуск зрителей при подсчёте онлайна.^n0 — Выключен^n1 — Включен
+CVAR_MESSAGE_AWLLOW_AWP             = Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 — Выключено^n1 — Включено
+CVAR_ROUND_INFINITE                 = Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n>= 1 — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока
+CVAR_GIVE_COMPENSATION              = Выдача компенсации за отобранное AWP при понижении онлайна.^n-1 — AK-47 или M4A1.^n0 — Выключено^n> 1 — Указаное количество денег.
+
+[ua]
+CHAT_LOW_ONLINE                     = ^3Недостатньо гравців на сервері, ^1щоб взяти ^4AWP^1. Необхідно: ^4%i^1.
+CHAT_WITHOUT_SPECTATORS             = ^3(без рахування глядачів)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3Дуже багато ^4AWP ^3в команді. ^1Максимально: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1В вас ^3відібрали ^4AWP^1. Причина:
+CHAT_REASON_LOW_ONLINE              = ^3низький онлайн^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3дуже багато AWP в команді^1.
+CHAT_AWP_BECAME_AVALIABLE           = ^1Необхідний ^3онланй набрано^1, ^3можна брати ^4AWP^1.
+CHAT_COMPENSATION_RIFLE             = ^1Вам ^3видана ^4гвинтівка ^1в якості ^3компенсації^1.
+CHAT_COMPENSATION_MONEY             = ^1Вам ^3выдана компенсація ^1в розмірі ^3%i^4$
+CVAR_MIN_PLAYERS                    = Мінімальна кількість гравців, при якій станут доступні AWP
+CVAR_LIMIT_TYPE                     = Тип ліміту AWP.^n1 — Точна кількість AWP на команду^n2 — Процент від онлайну гравців (awpl_percent_players)
+CVAR_MAX_AWP                        = Максимальна кількість AWP на команду, при awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = Процент від онлайну гравців для awpl_limit_type = 2^nНаприклад, при 10% — при онлайні 20 чоловік доступно 2 AWP на команду
+CVAR_IMMUNITY_FLAG                  = Флаг імунітету^nЗалиште значення порожнім, для відключення імунітету
+CVAR_SKIP_BOTS                      = Пропуск підрахунку AWP в ботів.^n0 — Вимкнений^n1 — Ввімкнений
+CVAR_SKIP_SPECTATORS                = Пропуск зрителей при подсчёте онлайна.^n0 — Вимкнений^n1 — Ввімкнений
+CVAR_MESSAGE_AWLLOW_AWP             = Відправляти сообщение, про те, що AWP знову доступна при наборі онлайну?^n0 — Вимкнено^n1 — Ввімкнено
+CVAR_ROUND_INFINITE                 = Підтримка нескінченного раунду. (CSDM)^n0 — Вимкнено^n>= 1 — Перевіряти онлайн раз в N секунд^n-1 — кожен спавн любого гравця
+CVAR_GIVE_COMPENSATION              = Видача компенсації за відібране AWP при знижені онлайну.^n-1 — AK-47 або M4A1.^n0 — Вимкнено^n> 1 — Вказана кількість грошей.
+
+[ro]
+CHAT_LOW_ONLINE                     = ^3Nu sunt destui playeri pe server , ^1pentru a lua ^4AWP^1. Necesari: ^4%i^1.
+CHAT_WITHOUT_SPECTATORS             = ^3(excluzand spectatorii)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3Prea multe ^4AWP ^3in echipa. ^1Maxim: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1Ti-a fost luat ^4AWP-ul. Motivul:
+CHAT_REASON_LOW_ONLINE              = ^3putini jucatori online^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3prea multe AWP-uri in echipa^1.
+CHAT_AWP_BECAME_AVALIABLE           = ^1Sunt destui ^3jucători online^1, ^3se poate lua ^4AWP^1.
+CHAT_COMPENSATION_RIFLE             = ^1Ti-a fost ^3data ^4o pusca ^3drept compensatie^1.
+CHAT_COMPENSATION_MONEY             = ^1Ti-a fost ^3data compensatie ^1in valoare de ^3%i^4$
+CVAR_MIN_PLAYERS                    = Numarul minim de jucatori la care AWP-ul va deveni disponibil
+CVAR_LIMIT_TYPE                     = Tipul limitei AWP.^n1 - Numar exact de AWP pe echipa^n2 - Procentaj al jucatorilor online (awpl_percent_players)
+CVAR_MAX_AWP                        = Numarul maxim de AWP pe echipa, cu awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = Procentajul jucatorilor online pentru awpl_limit_type = 2^nDe exemplu, cu 10% - cu 20 de jucatori online. 2 AWP disponibile pe echipa
+CVAR_IMMUNITY_FLAG                  = Flag de imunitate^nLasa gol pentru a dezactiva imunitatea
+CVAR_SKIP_BOTS                      = Ignora numaratul AWP pentru boti.^n0 — Dezactivat^n1 — Activat
+CVAR_SKIP_SPECTATORS                = Ignora spectatorii cand numeri jucatorii online.^n0 - Dezactivat^n1 - Activat
+CVAR_MESSAGE_AWLLOW_AWP             = Trimite un mesaj ca AWP-ul este disponibil cand se indeplineste numarul necesar de jucatori online?^n0 - Dezactivat^n1 - Activat
+CVAR_ROUND_INFINITE                 = Suport runda infinita. (CSDM)^n0 - Dezactivat^n>= 1 - Verifica nr. jucatorilor online la fiecare N secunde^n-1 - la fiecare spawn al fiecarui jucator
+CVAR_GIVE_COMPENSATION              = Atribuire compensatie pentru AWP atunci cand numarul jucatorilor online scade.^n-1 - AK-47 sau M4A1.^n0 - Dezactivat^n> 1 - Specifica valoare bani.
+
+[de]
+CHAT_LOW_ONLINE                     = ^3Nicht genug Spieler um ^1^4AWP^1 zu verwenden. Als Minimum werden ^4%i^1 Spieler benötigt. 
+CHAT_WITHOUT_SPECTATORS             = ^3(ohne Zuschauer)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3Zu viele Spieler in deinem  Team nutzen bereits eine AWP! Maximale erlaubte Anzahl: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1Deine ^4AWP^1 wurde entfernt! Grund: 
+CHAT_REASON_LOW_ONLINE              = ^3Zu wenige Spieler für AWP auf dem Server^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3Zu viele Spieler in deinem Team nutzen bereits AWP^1.
+CHAT_AWP_BECAME_AVALIABLE           = ^1Aufgrund der derzeitigen ^3Spieleranzahl^1 ^3darf ^4AWP^1 genutzt werden.
+CHAT_COMPENSATION_RIFLE             = ^1Du ^3hast eine ^3%i^4$ als Entschädigung ^1erhalten.
+CHAT_COMPENSATION_MONEY             = Du hast ^3%i^4$ als eine Entschädigung erhalten.
+CVAR_MIN_PLAYERS                    = Die Mindestanzahl an Spielern, ab der AWPs verfügbar sind
+CVAR_LIMIT_TYPE                     = AWP-Limittyp.^n1 – Genaue Anzahl von AWPs pro Team^n2 – Prozentsatz der Online-Spieler (awpl_percent_players)
+CVAR_MAX_AWP                        = Die maximale Anzahl von AWPs pro Team, mit awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = Prozentsatz der Online-Spieler für awpl_limit_type = 2^nZum Beispiel mit 10 % - bei 20 Personen online, sind 2 AWP pro Team verfügbar
+CVAR_IMMUNITY_FLAG                  = Immunitäts-Flag^n. Lass es leer, um die Immunität zu deaktivieren
+CVAR_SKIP_BOTS                      = Bei AWP-Berechnung Bots ignorieren?^n0 – Deaktiviert^n1 – Aktiviert
+CVAR_SKIP_SPECTATORS                = Zuschauer bei Online-Spieleranzahl überspringen.^n0 - Deaktiviert^n1 - Aktiviert
+CVAR_MESSAGE_AWLLOW_AWP             = Sollen die Spieler darüber informiert werden, dass die AWP wieder verfügbar ist? 
+CVAR_ROUND_INFINITE                 = Unterstützung endloser Runden. (CSDM)^n0 - Deaktiviert^n>= 1 - Alle N Sekunden online prüfen^n-1 - auf dem Spawn jedes Spielers
+CVAR_GIVE_COMPENSATION              = Entschädigung für vorhandene AWP, wenn nicht mehr genug Spieler vorhanden sind.^n-1 - AK-47 oder M4A1.^n0 - Deaktiviert^n> 1 - Angegebener Geldbetrag.
