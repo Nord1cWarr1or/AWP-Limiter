@@ -1,3 +1,4 @@
+
 #if defined _awp_limiter_n
 	#endinput
 #endif
@@ -18,6 +19,7 @@ enum AwpGiveType:GIVE_TYPE
  */
 enum AwpRestrictionType:RESTRICTION_TYPE
 {
+    AWP_ALLOWED,
     LOW_ONLINE,
     TOO_MANY_AWP_ON_TEAM
 };
