@@ -201,9 +201,6 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     if(user_has_awp(id))
         return;
 
-    if(type == ITEM_TYPE_TOUCHED && get_member(id, m_bHasPrimary))
-        return;
-
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
 
     if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
