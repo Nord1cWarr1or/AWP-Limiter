@@ -252,29 +252,40 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     }
 }
 
-PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED)
+bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED)
 {
     if(g_bIsLowOnline)
     {
         iReason = LOW_ONLINE;
         return false;
     }
-   
+
+    new TeamName:iPlayerTeam = get_member(id, m_iTeam);
+
+    if(!IsTeamCanTakeAWP(iPlayerTeam))
+    {
+        iReason = TOO_MANY_AWP_ON_TEAM;
+        return false;
+    }
+
+    return true;
+}
+
+bool:IsTeamCanTakeAWP(const TeamName:iTeam)
+{
     switch(g_pCvarValue[LIMIT_TYPE])
     {
         case 1:
         {
-            if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_pCvarValue[MAX_AWP])
+            if(g_iAWPAmount[iTeam] >= g_pCvarValue[MAX_AWP])
             {
-                iReason = TOO_MANY_AWP_ON_TEAM;
                 return false;
             }
         }
         case 2:
         {
-            if(g_iAWPAmount[get_member(id, m_iTeam)] >= g_iNumAllowedAWP)
+            if(g_iAWPAmount[iTeam] >= g_iNumAllowedAWP)
             {
-                iReason = TOO_MANY_AWP_ON_TEAM;
                 return false;
             }
         }
@@ -758,6 +769,8 @@ public plugin_natives()
 {
     register_native("awpl_is_low_online", "native_awpl_is_low_online");
     register_native("awpl_set_low_online", "native_awpl_set_low_online");
+    register_native("awpl_is_team_can_take_awp", "native_awpl_is_team_can_take_awp");
+    register_native("awpl_is_player_can_take_awp", "native_awpl_is_player_can_take_awp");
 }
 
 public native_awpl_is_low_online(iPlugin, iParams)
@@ -782,6 +795,24 @@ public native_awpl_set_low_online(iPlugin, iParams)
         UnsetLowOnlineMode();
         CheckTeamLimit();
     }
+}
+
+public native_awpl_is_team_can_take_awp(iPlugin, iParams)
+{
+    new TeamName:iTeam = TeamName:get_param(1);
+
+    return IsTeamCanTakeAWP(iTeam);
+}
+
+public native_awpl_is_player_can_take_awp(iPlugin, iParams)
+{
+    new id = get_param(1);
+    new AwpRestrictionType:iReason;
+
+    new bool:bCanTakeAWP = PlayerCanTakeAWP(id, iReason);
+
+    set_param_byref(2, any:iReason);
+    return bCanTakeAWP;
 }
 
 public plugin_end()

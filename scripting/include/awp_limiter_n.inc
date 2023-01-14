@@ -99,8 +99,28 @@ native bool:awpl_is_low_online();
  *       until next online check.
  * @note Using this native will cause an immediate awp to be taken if low online mide is set to true.
  *
- * @param bSet          Determines whether to start or stop low online mode.
+ * @param bSet          Determines whether to start or stop low online mode
  *
  * @noreturn
  */
 native awpl_set_low_online(bool:bSet);
+
+/**
+ * Checks if players in given team can take AWP.
+ *
+ * @param iTeam         Team index
+ *
+ * @return              True if players in given team can take AWP, false otherwise.
+ */
+native booL:awpl_is_team_can_take_awp(TeamName:iTeam);
+
+/**
+ * Checks if a given player can take an AWP.
+ *
+ * @param id            Player index
+ * @param iReason       The optional variable to store the reason if player can't take AWP.
+ *                      Look at the enum RESTRICTION_TYPE
+ *
+ * @return              True if player can take AWP, false otherwise.
+ */
+native bool:awpl_is_player_can_take_awp(id, &AwpRestrictionType:iReason = AWP_ALLOWED);
