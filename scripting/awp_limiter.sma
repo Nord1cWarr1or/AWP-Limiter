@@ -88,7 +88,6 @@ public plugin_init()
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
     RegisterHookChain(RG_CBasePlayer_HasRestrictItem,       "RG_CBasePlayer_HasRestrictItem_pre",       .post = false);
     RegisterHookChain(RG_CBasePlayer_AddPlayerItem,         "RG_CBasePlayer_AddPlayerItem_post",        .post = true);
-    RegisterHookChain(RH_SV_DropClient,                     "RH_SV_DropClient_pre",                     .post = false);
     RegisterHookChain(RG_CSGameRules_RestartRound,          "RG_RestartRound_post",                     .post = true);
     RegisterHookChain(RG_CBasePlayer_RemovePlayerItem,      "RG_CBasePlayer_RemovePlayerItem_post",     .post = true);
 
@@ -328,7 +327,7 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     debug_log(__LINE__, "(+) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
+public client_disconnected(id)
 {
     if(!is_user_connected(id))
         return;
@@ -336,7 +335,7 @@ public RH_SV_DropClient_pre(const id, bool:crash, const fmt[])
     if(!user_has_awp(id))
         return;
 
-    debug_log(__LINE__, "<DropClient> called. Player: <%n>", id);
+    debug_log(__LINE__, "<client_disconnected> called. Player: <%n>", id);
 
     if(IsUserBot[id])
     {
