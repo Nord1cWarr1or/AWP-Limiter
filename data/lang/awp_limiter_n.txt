@@ -102,3 +102,23 @@ CVAR_SKIP_SPECTATORS                = Zuschauer bei Online-Spieleranzahl übersp
 CVAR_MESSAGE_AWLLOW_AWP             = Sollen die Spieler darüber informiert werden, dass die AWP wieder verfügbar ist? 
 CVAR_ROUND_INFINITE                 = Unterstützung endloser Runden. (CSDM)^n0 - Deaktiviert^n>= 1 - Alle N Sekunden online prüfen^n-1 - auf dem Spawn jedes Spielers
 CVAR_GIVE_COMPENSATION              = Entschädigung für vorhandene AWP, wenn nicht mehr genug Spieler vorhanden sind.^n-1 - AK-47 oder M4A1.^n0 - Deaktiviert^n> 1 - Angegebener Geldbetrag.
+
+[cn]
+CHAT_LOW_ONLINE                     = ^3服务器人数不足 , ^1禁止使用 ^4AWP^1. 需要: ^4%i^1.
+CHAT_WITHOUT_SPECTATORS             = ^3(不包括观众)
+CHAT_TOO_MANY_AWP_PER_TEAM          = ^3团队中 ^4AWP ^3数量太多了. ^1最大允许数: ^4%i^1.
+CHAT_AWP_TAKEN_AWAY                 = ^1你的 ^4AWP^1被清除. 原因:
+CHAT_REASON_LOW_ONLINE              = ^3在线状态过低^1.
+CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3团队中AWP数量太多了^1.
+CHAT_COMPENSATION_RIFLE             = ^1你 ^3获得了 ^4一把步枪 ^3作为补偿^1.
+CHAT_COMPENSATION_MONEY             = ^1你获得了^3%i^4$ ^1作为补偿
+CVAR_MIN_PLAYERS                    = 允许使用AWP的最小玩家数
+CVAR_LIMIT_TYPE                     = AWP 限制类型.^n1 - 每个团队使用的数量^n2 - 在线玩家百分比 (awpl_percent_players)
+CVAR_MAX_AWP                        = 每个团队最大AWP数, with awpl_limit_type = 1
+CVAR_PERCENT_PLAYERS                = 在线玩家百分比，如设置 awpl_limit_type = 2^n10%-20%人在线. 每个团队就允许两把AWP
+CVAR_IMMUNITY_FLAG                  = 免疫权限^n留空去除免疫权限
+CVAR_SKIP_BOTS                      = 机器人是否计算AWP数.^n0 — 禁用^n1 — 启用
+CVAR_SKIP_SPECTATORS                = 在线人数是否计算观察者.^n0 - 禁用^n1 - 启用
+CVAR_MESSAGE_AWLLOW_AWP             = 在满足所需在线玩家时再次发送AWP可用的消息^n0-禁用^n1-启用
+CVAR_ROUND_INFINITE                 = 无限复活模式. (CSDM)^n0 - 禁用^n>= 1 - 每多少秒检查一次^n-1 - 每个玩家重生
+CVAR_GIVE_COMPENSATION              = 在线人数不足时，使用AWP发放的补偿.^n-1 - AK-47 或M4A1.^n0 - 禁用^n> 1 - 指定补偿的金钱.
