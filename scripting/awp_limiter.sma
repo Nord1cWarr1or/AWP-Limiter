@@ -4,7 +4,7 @@
 
 #include <awp_limiter_n>
 
-new const PLUGIN_VERSION[] = "1.2.0 Beta";
+new const PLUGIN_VERSION[] = "1.2.1 Beta";
 
 #pragma semicolon 1
 
@@ -329,9 +329,6 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
 
 public client_disconnected(id)
 {
-    if(!is_user_connected(id))
-        return;
-
     if(!user_has_awp(id))
         return;
 
