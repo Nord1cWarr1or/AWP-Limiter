@@ -329,6 +329,9 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
 
 public client_disconnected(id)
 {
+    if(!is_user_connected(id))
+        return;
+
     if(!user_has_awp(id))
         return;
 
