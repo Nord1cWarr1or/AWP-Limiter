@@ -220,7 +220,10 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
     if(type == ITEM_TYPE_EQUIPPED)
     {
-        log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", g_szMapName);
+        new szMapName[MAX_MAPNAME_LENGTH];
+        rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
+
+        log_amx("Map <%s> is an AWP map (by equip). Plugin was stopped.", szMapName);
         pause("ad");
 
         return;
