@@ -777,8 +777,8 @@ public plugin_natives()
 {
     register_native("awpl_is_low_online", "native_awpl_is_low_online");
     register_native("awpl_set_low_online", "native_awpl_set_low_online");
-    register_native("awpl_is_team_can_take_awp", "native_awpl_is_team_can_take_awp");
-    register_native("awpl_is_player_can_take_awp", "native_awpl_is_player_can_take_awp");
+    register_native("awpl_can_team_take_awp", "native_awpl_can_team_take_awp");
+    register_native("awpl_can_player_take_awp", "native_awpl_can_player_take_awp");
 }
 
 public native_awpl_is_low_online(iPlugin, iParams)
@@ -805,21 +805,24 @@ public native_awpl_set_low_online(iPlugin, iParams)
     }
 }
 
-public native_awpl_is_team_can_take_awp(iPlugin, iParams)
+public native_awpl_can_team_take_awp(iPlugin, iParams)
 {
     new TeamName:iTeam = TeamName:get_param(1);
 
     return IsTeamCanTakeAWP(iTeam);
 }
 
-public native_awpl_is_player_can_take_awp(iPlugin, iParams)
+public native_awpl_can_player_take_awp(iPlugin, iParams)
 {
-    new id = get_param(1);
+    enum { index = 1, reason };
+
+    new id = get_param(index);
+
     new AwpRestrictionType:iReason;
 
     new bool:bCanTakeAWP = PlayerCanTakeAWP(id, iReason);
 
-    set_param_byref(2, any:iReason);
+    set_param_byref(reason, any:iReason);
     return bCanTakeAWP;
 }
 

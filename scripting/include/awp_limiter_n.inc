@@ -124,7 +124,7 @@ native awpl_set_low_online(bool:bSet);
  *
  * @return              True if players in given team can take AWP, false otherwise.
  */
-native booL:awpl_is_team_can_take_awp(TeamName:iTeam);
+native booL:awpl_can_team_take_awp(TeamName:iTeam);
 
 /**
  * Checks if a given player can take an AWP.
@@ -135,4 +135,4 @@ native booL:awpl_is_team_can_take_awp(TeamName:iTeam);
  *
  * @return              True if player can take AWP, false otherwise.
  */
-native bool:awpl_is_player_can_take_awp(id, &AwpRestrictionType:iReason = AWP_ALLOWED);
+native bool:awpl_can_player_take_awp(id, &AwpRestrictionType:iReason = AWP_ALLOWED);
