@@ -20,8 +20,6 @@ new const PLUGIN_VERSION[] = "1.2.1 Beta";
 const MAX_MAPNAME_LENGTH = 32;
 #endif
 
-new g_szMapName[MAX_MAPNAME_LENGTH];
-
 const TASKID__CHECK_ONLINE = 10200;
 
 enum _:Cvars
@@ -48,7 +46,8 @@ enum _:API_FORWARDS
     LOW_ONLINE_MODE_STOP,
     TRIED_TO_GET_AWP,
     AWP_TAKEN_FROM_PLAYER,
-    GIVE_COMPENSATION_FW
+    GIVE_COMPENSATION_FW,
+    SHOULD_WORK_ON_MAP
 };
 
 new g_iForwardsPointers[API_FORWARDS];
@@ -75,14 +74,6 @@ public plugin_init()
 {
     register_plugin("AWP Limiter", PLUGIN_VERSION, "Nordic Warrior");
 
-    if(IsAwpMap())
-    {
-        log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", g_szMapName);
-        pause("ad");
-
-        return;
-    }
-
     register_dictionary("awp_limiter_n.txt");
 
     RegisterHookChain(RG_CSGameRules_CanHavePlayerItem,     "RG_CSGameRules_CanHavePlayerItem_pre",     .post = false);
@@ -101,6 +92,25 @@ public plugin_init()
     AutoExecConfig(.name = "AWPLimiter");
 
     CreateAPIForwards();
+
+    new szMapName[MAX_MAPNAME_LENGTH];
+    rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
+
+    if(IsAwpMap(szMapName))
+    {
+        log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", szMapName);
+        pause("ad");
+        return;
+    }
+
+    ExecuteForward(g_iForwardsPointers[SHOULD_WORK_ON_MAP], g_iReturn, szMapName);
+
+    if(g_iReturn == AWPL_BREAK)
+    {
+        log_amx("Plugin shouldn't work on map <%s> because of API.", szMapName);
+        pause("ad");
+        return;
+    }
 
     /* <== DEBUG ==> */
 
@@ -123,7 +133,7 @@ public plugin_init()
 
         log_to_file(g_szLogPach, "================================================================");
 
-        debug_log(__LINE__, "Plugin initializated. Map: %s.", g_szMapName);
+        debug_log(__LINE__, "Plugin initializated. Map: %s.", szMapName);
     }
 
     /* <====> */
@@ -743,11 +753,9 @@ public OnChangeCvar_Immunity(pCvar, const szOldValue[], const szNewValue[])
     g_bitImmunityFlags = read_flags(szNewValue);
 }
 
-IsAwpMap()
+IsAwpMap(const szMapName[])
 {
-    rh_get_mapname(g_szMapName, charsmax(g_szMapName), MNT_TRUE);
-
-    if(equali(g_szMapName, "awp_", 4))
+    if(equali(szMapName, "awp_", 4))
     {
         return true;
     }
@@ -762,6 +770,7 @@ CreateAPIForwards()
     g_iForwardsPointers[TRIED_TO_GET_AWP]       = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
     g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER]  = CreateMultiForward("awpl_awp_taken_from_player", ET_STOP, FP_CELL, FP_CELL);
     g_iForwardsPointers[GIVE_COMPENSATION_FW]   = CreateMultiForward("awpl_give_compensation", ET_STOP, FP_CELL);
+    g_iForwardsPointers[SHOULD_WORK_ON_MAP]     = CreateMultiForward("awpl_plugin_should_work_on_this_map", ET_STOP, FP_STRING);
 }
 
 public plugin_natives()

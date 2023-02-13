@@ -86,6 +86,18 @@ forward awpl_awp_taken_from_player(const id, AwpRestrictionType:iRestrictType);
 forward awpl_give_compensation(const id);
 
 /**
+ * Called once on map start, to decide whether the plugin should work on this map
+ *
+ * @note This forward called in plugin_init().
+ *
+ * @param szMapName     Map name
+ *
+ * @return              AWPL_CONTINUE to allow the AWP Limiter work on this map
+ *                      AWPL_BREAK to disable it
+ */
+forward awpl_plugin_should_work_on_this_map(const szMapName[]);
+
+/**
  * Checks if the low online mode is currently active.
  *
  * @return              True if the low online mode is currently active, false otherwise.
@@ -112,7 +124,7 @@ native awpl_set_low_online(bool:bSet);
  *
  * @return              True if players in given team can take AWP, false otherwise.
  */
-native bool:awpl_is_team_can_take_awp(TeamName:iTeam);
+native booL:awpl_is_team_can_take_awp(TeamName:iTeam);
 
 /**
  * Checks if a given player can take an AWP.
