@@ -4,7 +4,7 @@
 
 #include <awp_limiter_n>
 
-new const PLUGIN_VERSION[] = "1.3.0 Beta";
+new const PLUGIN_VERSION[] = "1.3.1 Beta";
 
 #pragma semicolon 1
 
