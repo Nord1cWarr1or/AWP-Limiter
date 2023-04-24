@@ -12,7 +12,7 @@ new const PLUGIN_VERSION[] = "1.3.0 Beta";
 #define FOREACHPLAYER(%0,%1,%2,%3) new __players[MAX_PLAYERS], %0, %1; \
     %1 *= 1; \
     get_players_ex(__players, %0, %2, %3); \
-    for (new i, %1 = __players[i]; i < %0; %1 = __players[++i])
+    for (new i, %1 = __players[i]; i < %0; %1 = __players[i++])
 
 #define GetCvarDesc(%0) fmt("%L", LANG_SERVER, %0)
 
