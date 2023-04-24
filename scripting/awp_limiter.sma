@@ -22,8 +22,7 @@ const MAX_MAPNAME_LENGTH = 32;
 
 const TASKID__CHECK_ONLINE = 10200;
 
-enum _:Cvars
-{
+enum _:Cvars {
     PLUGIN_CHAT_PREFIX[32],
     MIN_PLAYERS,
     MAX_AWP,
@@ -40,8 +39,7 @@ enum _:Cvars
 
 new g_pCvarValue[Cvars];
 
-enum _:API_FORWARDS
-{
+enum _:API_FORWARDS {
     LOW_ONLINE_MODE_START,
     LOW_ONLINE_MODE_STOP,
     TRIED_TO_GET_AWP,
@@ -70,8 +68,7 @@ new g_szLogPach[MAX_RESOURCE_PATH_LENGTH];
 
 /* <====> */
 
-public plugin_init()
-{
+public plugin_init() {
     register_plugin("AWP Limiter", PLUGIN_VERSION, "Nordic Warrior");
 
     register_dictionary("awp_limiter_n.txt");
@@ -96,8 +93,7 @@ public plugin_init()
     new szMapName[MAX_MAPNAME_LENGTH];
     rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
 
-    if(IsAwpMap(szMapName))
-    {
+    if (IsAwpMap(szMapName)) {
         log_amx("Map <%s> is an AWP map (by name). Plugin was stopped.", szMapName);
         pause("ad");
         return;
@@ -105,8 +101,7 @@ public plugin_init()
 
     ExecuteForward(g_iForwardsPointers[SHOULD_WORK_ON_MAP], g_iReturn, szMapName);
 
-    if(g_iReturn == AWPL_BREAK)
-    {
+    if (g_iReturn == AWPL_BREAK) {
         log_amx("Plugin shouldn't work on map <%s> because of API.", szMapName);
         pause("ad");
         return;
@@ -116,15 +111,15 @@ public plugin_init()
 
     g_bIsDebugActive = bool:(plugin_flags() & AMX_FLAG_DEBUG);
 
-    if(g_bIsDebugActive)
-    {
+    if (g_bIsDebugActive) {
         new szLogsDir[MAX_RESOURCE_PATH_LENGTH];
         get_localinfo("amxx_logs", szLogsDir, charsmax(szLogsDir));
 
         add(szLogsDir, charsmax(szLogsDir), "/awpl_debug");
 
-        if(!dir_exists(szLogsDir))
+        if (!dir_exists(szLogsDir)) {
             mkdir(szLogsDir);
+        }
 
         new iYear, iMonth, iDay;
         date(iYear, iMonth, iDay);
@@ -143,21 +138,16 @@ public plugin_init()
     set_task(6.274, "_OnConfigsExecuted");
 }
 
-public _OnConfigsExecuted()
-{
-    if(g_pCvarValue[ROUND_INFINITE] > 0)
-    {
+public _OnConfigsExecuted() {
+    if (g_pCvarValue[ROUND_INFINITE] > 0) {
         DisableHookChain(g_iHookChain_RoundEnd);
 
-        if(!task_exists(TASKID__CHECK_ONLINE))
-        {
+        if (!task_exists(TASKID__CHECK_ONLINE)) {
             set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
         }
 
         debug_log(__LINE__, "Infinite round. Task for check online started.");
-    }
-    else if(g_pCvarValue[ROUND_INFINITE] == -1)
-    {
+    } else if (g_pCvarValue[ROUND_INFINITE] == -1)    {
         DisableHookChain(g_iHookChain_RoundEnd);
         EnableHookChain(g_iHookChain_PlayerSpawn);
 
@@ -166,30 +156,27 @@ public _OnConfigsExecuted()
 
     g_bitImmunityFlags = read_flags(g_pCvarValue[IMMNUNITY_FLAG]);
 
-    register_cvar("AWPLimiter_version", PLUGIN_VERSION, FCVAR_SERVER|FCVAR_SPONLY|FCVAR_UNLOGGED);
+    register_cvar("AWPLimiter_version", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY | FCVAR_UNLOGGED);
 }
 
-public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
-{
-    if(get_member(item, m_iId) != WEAPON_AWP)
+public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item) {
+    if (get_member(item, m_iId) != WEAPON_AWP) {
         return;
+    }
 
     debug_log(__LINE__, "<CanHavePlayerItem> called. Player: <%n>", id);
 
-    if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
-    {
+    if (g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags) {
         debug_log(__LINE__, "Player has immunity. Skipped.");
         return;
     }
 
     new AwpRestrictionType:iReason;
 
-    if(!PlayerCanTakeAWP(id, iReason))
-    {
+    if (!PlayerCanTakeAWP(id, iReason)) {
         ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, OTHER, iReason);
 
-        if(g_iReturn == AWPL_BREAK)
-        {
+        if (g_iReturn == AWPL_BREAK) {
             debug_log(__LINE__, "AWP is allowed by API.");
             return;
         }
@@ -202,24 +189,23 @@ public RG_CSGameRules_CanHavePlayerItem_pre(const id, const item)
     }
 }
 
-public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:type)
-{
-    if(item != ITEM_AWP)
+public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:type) {
+    if (item != ITEM_AWP) {
         return;
+    }
 
-    if(user_has_awp(id))
+    if (user_has_awp(id)) {
         return;
+    }
 
     debug_log(__LINE__, "<HasRestrictItem> called. Player: <%n>, Type: %i.", id, type);
 
-    if(g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags)
-    {
+    if (g_bitImmunityFlags && get_user_flags(id) & g_bitImmunityFlags) {
         debug_log(__LINE__, "Player has immunity. Skipped.");
         return;
     }
 
-    if(type == ITEM_TYPE_EQUIPPED)
-    {
+    if (type == ITEM_TYPE_EQUIPPED) {
         new szMapName[MAX_MAPNAME_LENGTH];
         rh_get_mapname(szMapName, charsmax(szMapName), MNT_TRUE);
 
@@ -231,25 +217,21 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
 
     new AwpRestrictionType:iReason;
 
-    if(!PlayerCanTakeAWP(id, iReason))
-    {
+    if (!PlayerCanTakeAWP(id, iReason)) {
         ExecuteForward(g_iForwardsPointers[TRIED_TO_GET_AWP], g_iReturn, id, type == ITEM_TYPE_BUYING ? BUY : TOUCH, iReason);
 
-        if(g_iReturn == AWPL_BREAK)
-        {
+        if (g_iReturn == AWPL_BREAK) {
             debug_log(__LINE__, "AWP is allowed by API.");
             return;
         }
 
         SetHookChainReturn(ATYPE_BOOL, true);
 
-        if(type == ITEM_TYPE_TOUCHED)
-        {
+        if (type == ITEM_TYPE_TOUCHED) {
             static Float:flGameTime; flGameTime = get_gametime();
             static Float:flNextMessageTime;
 
-            if(flGameTime >= flNextMessageTime)
-            {
+            if (flGameTime >= flNextMessageTime) {
                 SendReasonToPlayer(id, iReason);
                 debug_log(__LINE__, "Player can't take AWP because of %s.", iReason == LOW_ONLINE ? "low online" : "it's too much in team");
 
@@ -264,18 +246,15 @@ public RG_CBasePlayer_HasRestrictItem_pre(const id, ItemID:item, ItemRestType:ty
     }
 }
 
-bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED)
-{
-    if(g_bIsLowOnline)
-    {
+bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED) {
+    if (g_bIsLowOnline) {
         iReason = LOW_ONLINE;
         return false;
     }
 
     new TeamName:iPlayerTeam = get_member(id, m_iTeam);
 
-    if(!IsTeamCanTakeAWP(iPlayerTeam))
-    {
+    if (!IsTeamCanTakeAWP(iPlayerTeam)) {
         iReason = TOO_MANY_AWP_ON_TEAM;
         return false;
     }
@@ -283,21 +262,17 @@ bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED)
     return true;
 }
 
-bool:IsTeamCanTakeAWP(const TeamName:iTeam)
-{
-    switch(g_pCvarValue[LIMIT_TYPE])
-    {
+bool:IsTeamCanTakeAWP(const TeamName:iTeam) {
+    switch (g_pCvarValue[LIMIT_TYPE]) {
         case 1:
         {
-            if(g_iAWPAmount[iTeam] >= g_pCvarValue[MAX_AWP])
-            {
+            if (g_iAWPAmount[iTeam] >= g_pCvarValue[MAX_AWP]) {
                 return false;
             }
         }
         case 2:
         {
-            if(g_iAWPAmount[iTeam] >= g_iNumAllowedAWP)
-            {
+            if (g_iAWPAmount[iTeam] >= g_iNumAllowedAWP) {
                 return false;
             }
         }
@@ -306,29 +281,27 @@ bool:IsTeamCanTakeAWP(const TeamName:iTeam)
     return true;
 }
 
-SendReasonToPlayer(id, AwpRestrictionType:iReason)
-{
+SendReasonToPlayer(id, AwpRestrictionType:iReason) {
     SetGlobalTransTarget(id);
 
-    switch(iReason)
-    {
+    switch (iReason) {
         case LOW_ONLINE: client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
         case TOO_MANY_AWP_ON_TEAM: client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
     }
 }
 
-public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
-{
-    if(g_bIsLowOnline)
+public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem) {
+    if (g_bIsLowOnline) {
         return;
+    }
 
-    if(get_member(pItem, m_iId) != WEAPON_AWP)
+    if (get_member(pItem, m_iId) != WEAPON_AWP) {
         return;
+    }
 
     debug_log(__LINE__, "<AddPlayerItem> called. Player: <%n>", id);
 
-    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
-    {
+    if (g_pCvarValue[SKIP_BOTS] && IsUserBot[id]) {
         debug_log(__LINE__, "Player is bot. Skipped.");
         return;
     }
@@ -340,22 +313,21 @@ public RG_CBasePlayer_AddPlayerItem_post(const id, const pItem)
     debug_log(__LINE__, "(+) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public client_disconnected(id)
-{
-    if(!is_user_connected(id))
+public client_disconnected(id) {
+    if (!is_user_connected(id)) {
         return;
+    }
 
-    if(!user_has_awp(id))
+    if (!user_has_awp(id)) {
         return;
+    }
 
     debug_log(__LINE__, "<client_disconnected> called. Player: <%n>", id);
 
-    if(IsUserBot[id])
-    {
+    if (IsUserBot[id]) {
         IsUserBot[id] = false;
 
-        if(g_pCvarValue[SKIP_BOTS])
-        {
+        if (g_pCvarValue[SKIP_BOTS]) {
             debug_log(__LINE__, "Player is bot. Skipped.");
             return;
         }
@@ -368,18 +340,18 @@ public client_disconnected(id)
     debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem)
-{
-    if(g_bIsLowOnline)
+public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem) {
+    if (g_bIsLowOnline) {
         return;
+    }
 
-    if(get_member(pItem, m_iId) != WEAPON_AWP)
+    if (get_member(pItem, m_iId) != WEAPON_AWP) {
         return;
+    }
 
     debug_log(__LINE__, "<RemovePlayerItem> called. Player: <%n>", id);
 
-    if(g_pCvarValue[SKIP_BOTS] && IsUserBot[id])
-    {
+    if (g_pCvarValue[SKIP_BOTS] && IsUserBot[id]) {
         debug_log(__LINE__, "Player is bot. Skipped.");
         return;
     }
@@ -391,30 +363,24 @@ public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem)
     debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
-public client_putinserver(id)
-{
-    if(is_user_bot(id))
-    {
+public client_putinserver(id) {
+    if (is_user_bot(id)) {
         IsUserBot[id] = true;
     }
 }
 
-public RG_RestartRound_post()
-{
+public RG_RestartRound_post() {
     arrayset(g_iAWPAmount[TEAM_UNASSIGNED], 0, sizeof g_iAWPAmount);
 
     debug_log(__LINE__, "--> New round has started. <--");
 
-    if(g_bIsLowOnline)
-    {
+    if (g_bIsLowOnline) {
         debug_log(__LINE__, "Low online mode is now active. AWP count is skipped.");
         return;
     }
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
-    {
-        if(user_has_awp(id))
-        {
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead), "") {
+        if (user_has_awp(id)) {
             g_iAWPAmount[get_member(id, m_iTeam)]++;
         }
     }
@@ -422,46 +388,38 @@ public RG_RestartRound_post()
     debug_log(__LINE__, "Now it's [ %i ] AWP in CT team & [ %i ] AWP in TE team.", g_iAWPAmount[TEAM_CT], g_iAWPAmount[TEAM_TERRORIST]);
 }
 
-public RG_CBasePlayer_Spawn_post(const id)
-{
-    if(!is_user_alive(id))
+public RG_CBasePlayer_Spawn_post(const id) {
+    if (!is_user_alive(id)) {
         return;
+    }
 
     CheckOnline();
 }
 
-public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
-{
+public RG_RoundEnd_post(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay) {
     debug_log(__LINE__, "--> Round is ended. <--");
 
     CheckOnline();
 }
 
-public CheckOnline()
-{
+public CheckOnline() {
     GetOnlinePlayers();
 
     debug_log(__LINE__, "<CheckOnline> called. Online players: [ %i ].%s", g_iOnlinePlayers, g_pCvarValue[SKIP_SPECTATORS] ? " Spectators skipped." : "");
 
-    if(!g_iOnlinePlayers)
-    {
+    if (!g_iOnlinePlayers) {
         g_bIsLowOnline = true;
         return;
     }
 
-    if(g_iOnlinePlayers < g_pCvarValue[MIN_PLAYERS])
-    {
-        if(!g_bIsLowOnline)
-        {
+    if (g_iOnlinePlayers < g_pCvarValue[MIN_PLAYERS]) {
+        if (!g_bIsLowOnline) {
             SetLowOnlineMode();
         }
 
         return;
-    }
-    else
-    {
-        if(g_bIsLowOnline)
-        {
+    } else {
+        if (g_bIsLowOnline) {
             UnsetLowOnlineMode();
         }
     }
@@ -469,25 +427,21 @@ public CheckOnline()
     CheckTeamLimit();
 }
 
-GetOnlinePlayers()
-{
-    new iNumCT = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "CT");
-    new iNumTE = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam), "TERRORIST");
+GetOnlinePlayers() {
+    new iNumCT = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam), "CT");
+    new iNumTE = get_playersnum_ex(g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam), "TERRORIST");
 
     g_iOnlinePlayers = iNumCT + iNumTE;
 
-    if(!g_pCvarValue[SKIP_SPECTATORS])
-    {
-        g_iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_MatchTeam, "SPECTATOR");
+    if (!g_pCvarValue[SKIP_SPECTATORS]) {
+        g_iOnlinePlayers += get_playersnum_ex(GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_MatchTeam, "SPECTATOR");
     }
 }
 
-SetLowOnlineMode()
-{
+SetLowOnlineMode() {
     ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_START], g_iReturn);
 
-    if(g_iReturn == AWPL_BREAK)
-    {
+    if (g_iReturn == AWPL_BREAK) {
         debug_log(__LINE__, "Low online mode can't start because of API.");
         CheckTeamLimit();
         return;
@@ -500,30 +454,25 @@ SetLowOnlineMode()
     debug_log(__LINE__, "Low online mode has started.");
 }
 
-UnsetLowOnlineMode()
-{
+UnsetLowOnlineMode() {
     ExecuteForward(g_iForwardsPointers[LOW_ONLINE_MODE_STOP], g_iReturn);
 
-    if(g_iReturn == AWPL_BREAK)
-    {
+    if (g_iReturn == AWPL_BREAK) {
         debug_log(__LINE__, "Low online mode can't stop because of API.");
         return;
     }
 
     g_bIsLowOnline = false;
 
-    if(g_pCvarValue[MESSAGE_ALLOWED_AWP])
-    {
+    if (g_pCvarValue[MESSAGE_ALLOWED_AWP]) {
         client_print_color(0, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_BECAME_AVALIABLE");
     }
 
     debug_log(__LINE__, "Low online mode has stopped.");
 }
 
-CheckTeamLimit()
-{
-    switch(g_pCvarValue[LIMIT_TYPE])
-    {
+CheckTeamLimit() {
+    switch (g_pCvarValue[LIMIT_TYPE]) {
         case 1: debug_log(__LINE__, "Limit type: 1. Max AWP per team: %i", g_pCvarValue[MAX_AWP]);
         case 2:
         {
@@ -531,38 +480,31 @@ CheckTeamLimit()
 
             debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated num of max AWP per team: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
 
-            if(g_iNumAllowedAWP < 1)
-            {
+            if (g_iNumAllowedAWP < 1) {
                 g_iNumAllowedAWP = 1;
 
                 debug_log(__LINE__, "The AWP limit is less than one, so it was set to 1.", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
             }
 
-            if(g_iAWPAmount[TEAM_TERRORIST] > g_iNumAllowedAWP)
-            {
+            if (g_iAWPAmount[TEAM_TERRORIST] > g_iNumAllowedAWP) {
                 TakeAwpsFromTeam(TEAM_TERRORIST);
             }
 
-            if(g_iAWPAmount[TEAM_CT] > g_iNumAllowedAWP)
-            {
+            if (g_iAWPAmount[TEAM_CT] > g_iNumAllowedAWP) {
                 TakeAwpsFromTeam(TEAM_CT);
             }
         }
     }
 }
 
-TakeAllAwps()
-{
+TakeAllAwps() {
     new TeamName:iUserTeam;
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead), "")
-    {
-        if(user_has_awp(id))
-        {
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead), "") {
+        if (user_has_awp(id)) {
             ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
 
-            if(g_iReturn == AWPL_BREAK)
-            {
+            if (g_iReturn == AWPL_BREAK) {
                 debug_log(__LINE__, "AWP is not taken from player because of API.");
                 continue;
             }
@@ -582,18 +524,14 @@ TakeAllAwps()
     }
 }
 
-TakeAwpsFromTeam(TeamName:iTeam)
-{
+TakeAwpsFromTeam(TeamName:iTeam) {
     debug_log(__LINE__, "<TakeAwpsFromTeam> called for %i team.", iTeam);
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots|GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV|GetPlayers_ExcludeDead|GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT")
-    {
-        if(user_has_awp(id))
-        {
+    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead | GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead | GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT") {
+        if (user_has_awp(id)) {
             ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
 
-            if(g_iReturn == AWPL_BREAK)
-            {
+            if (g_iReturn == AWPL_BREAK) {
                 debug_log(__LINE__, "AWP is not taken from player because of API.");
                 continue;
             }
@@ -604,49 +542,44 @@ TakeAwpsFromTeam(TeamName:iTeam)
 
             GiveCompensation(id);
 
-            if(g_iAWPAmount[iTeam] <= g_iNumAllowedAWP)
+            if (g_iAWPAmount[iTeam] <= g_iNumAllowedAWP) {
                 break;
+            }
         }
     }
 }
 
-GiveCompensation(const id)
-{
-    if(!g_pCvarValue[GIVE_COMPENSATION])
+GiveCompensation(const id) {
+    if (!g_pCvarValue[GIVE_COMPENSATION]) {
         return;
+    }
 
     ExecuteForward(g_iForwardsPointers[GIVE_COMPENSATION_FW], g_iReturn, id);
 
-    if(g_iReturn == AWPL_BREAK)
+    if (g_iReturn == AWPL_BREAK) {
         return;
-    
-    switch(g_pCvarValue[GIVE_COMPENSATION])
-    {
-        case -1:
-        {
-            if(random_num(0, 1))
-            {
+    }
+
+    switch (g_pCvarValue[GIVE_COMPENSATION]) {
+        case -1: {
+            if (random_num(0, 1)) {
                 rg_give_item(id, "weapon_ak47");
                 rg_set_user_bpammo(id, WEAPON_AK47, 90);
-            }
-            else
-            {
+            } else {
                 rg_give_item(id, "weapon_m4a1");
                 rg_set_user_bpammo(id, WEAPON_M4A1, 90);
             }
 
             client_print_color(id, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_COMPENSATION_RIFLE");
         }
-        default:
-        {
+        default: {
             rg_add_account(id, g_pCvarValue[GIVE_COMPENSATION]);
             client_print_color(id, print_team_blue, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_COMPENSATION_MONEY", g_pCvarValue[GIVE_COMPENSATION]);
         }
     }
 }
 
-CreateCvars()
-{
+CreateCvars() {
     new pCvar;
 
     bind_pcvar_string(create_cvar("awpl_chat_prefix", "^3[^4AWP^3]",
@@ -713,61 +646,48 @@ CreateCvars()
     g_pCvarValue[GIVE_COMPENSATION]);
 }
 
-public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[])
-{
+public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[]) {
     debug_log(__LINE__, "Cvar <awpl_round_infinite> changed. Old: %s. New: %s", szOldValue, szNewValue);
 
     new iNewValue = str_to_num(szNewValue);
 
-    if(iNewValue > 0)
-    {
+    if (iNewValue > 0) {
         DisableHookChain(g_iHookChain_RoundEnd);
         DisableHookChain(g_iHookChain_PlayerSpawn);
 
-        if(!task_exists(TASKID__CHECK_ONLINE))
-        {
+        if (!task_exists(TASKID__CHECK_ONLINE)) {
             set_task_ex(float(g_pCvarValue[ROUND_INFINITE]), "CheckOnline", TASKID__CHECK_ONLINE, .flags = SetTask_Repeat);
-        }
-        else
-        {
+        } else {
             change_task(TASKID__CHECK_ONLINE, float(iNewValue));
         }
 
         CheckOnline();
-    }
-    else if(iNewValue == -1)
-    {
+    } else if (iNewValue == -1)    {
         DisableHookChain(g_iHookChain_RoundEnd);
         remove_task(TASKID__CHECK_ONLINE);
         EnableHookChain(g_iHookChain_PlayerSpawn);
-    }
-    else
-    {
+    } else {
         EnableHookChain(g_iHookChain_RoundEnd);
         DisableHookChain(g_iHookChain_PlayerSpawn);
         remove_task(TASKID__CHECK_ONLINE);
     }
 }
 
-public OnChangeCvar_Immunity(pCvar, const szOldValue[], const szNewValue[])
-{
+public OnChangeCvar_Immunity(pCvar, const szOldValue[], const szNewValue[]) {
     debug_log(__LINE__, "Cvar <awpl_immunity_flag> changed. Old: %s. New: %s", szOldValue, szNewValue);
 
     g_bitImmunityFlags = read_flags(szNewValue);
 }
 
-IsAwpMap(const szMapName[])
-{
-    if(equali(szMapName, "awp_", 4))
-    {
+IsAwpMap(const szMapName[]) {
+    if (equali(szMapName, "awp_", 4)) {
         return true;
     }
 
     return false;
 }
 
-CreateAPIForwards()
-{
+CreateAPIForwards() {
     g_iForwardsPointers[LOW_ONLINE_MODE_START]  = CreateMultiForward("awpl_low_online_start", ET_STOP);
     g_iForwardsPointers[LOW_ONLINE_MODE_STOP]   = CreateMultiForward("awpl_low_online_stop", ET_STOP);
     g_iForwardsPointers[TRIED_TO_GET_AWP]       = CreateMultiForward("awpl_player_tried_to_get_awp", ET_STOP, FP_CELL, FP_CELL, FP_CELL);
@@ -776,47 +696,39 @@ CreateAPIForwards()
     g_iForwardsPointers[SHOULD_WORK_ON_MAP]     = CreateMultiForward("awpl_plugin_should_work_on_this_map", ET_STOP, FP_STRING);
 }
 
-public plugin_natives()
-{
+public plugin_natives() {
     register_native("awpl_is_low_online", "native_awpl_is_low_online");
     register_native("awpl_set_low_online", "native_awpl_set_low_online");
     register_native("awpl_can_team_take_awp", "native_awpl_can_team_take_awp");
     register_native("awpl_can_player_take_awp", "native_awpl_can_player_take_awp");
 }
 
-public native_awpl_is_low_online(iPlugin, iParams)
-{
+public native_awpl_is_low_online(iPlugin, iParams) {
     return g_bIsLowOnline;
 }
 
-public native_awpl_set_low_online(iPlugin, iParams)
-{
+public native_awpl_set_low_online(iPlugin, iParams) {
     new bool:bSet = bool:get_param(1);
 
     GetOnlinePlayers();
 
-    if(bSet)
-    {
+    if (bSet) {
         debug_log(__LINE__, "Low online mode is set via native.");
         SetLowOnlineMode();
-    }
-    else
-    {
+    } else {
         debug_log(__LINE__, "Low online mode is unset via native.");
         UnsetLowOnlineMode();
         CheckTeamLimit();
     }
 }
 
-public native_awpl_can_team_take_awp(iPlugin, iParams)
-{
+public native_awpl_can_team_take_awp(iPlugin, iParams) {
     new TeamName:iTeam = TeamName:get_param(1);
 
     return IsTeamCanTakeAWP(iTeam);
 }
 
-public native_awpl_can_player_take_awp(iPlugin, iParams)
-{
+public native_awpl_can_player_take_awp(iPlugin, iParams) {
     enum { index = 1, reason };
 
     new id = get_param(index);
@@ -829,29 +741,26 @@ public native_awpl_can_player_take_awp(iPlugin, iParams)
     return bCanTakeAWP;
 }
 
-public plugin_end()
-{
-    if(g_bIsDebugActive)
-    {
+public plugin_end() {
+    if (g_bIsDebugActive) {
         log_to_file(g_szLogPach, "================================================================^n");
     }
 }
 
-stock bool:user_has_awp(const id)
-{
+stock bool:user_has_awp(const id) {
     return rg_has_item_by_name(id, "weapon_awp");
 }
 
 /* <== DEBUG ==> */
 
-debug_log(const iLine, const szText[], any:...)
-{
-    if(!g_bIsDebugActive)
+debug_log(const iLine, const szText[], any: ...) {
+    if (!g_bIsDebugActive) {
         return;
+    }
 
     static szLogText[512];
     vformat(szLogText, charsmax(szLogText), szText, 3);
-    
+
     format(szLogText, charsmax(szLogText), "[AWPL DEBUG] %s | LINE: %i", szLogText, iLine);
 
     log_to_file(g_szLogPach, szLogText);
