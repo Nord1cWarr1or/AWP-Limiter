@@ -147,7 +147,7 @@ public _OnConfigsExecuted() {
         }
 
         debug_log(__LINE__, "Infinite round. Task for check online started.");
-    } else if (g_pCvarValue[ROUND_INFINITE] == -1)    {
+    } else if (g_pCvarValue[ROUND_INFINITE] == -1) {
         DisableHookChain(g_iHookChain_RoundEnd);
         EnableHookChain(g_iHookChain_PlayerSpawn);
 
@@ -254,7 +254,7 @@ bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED) {
 
     new TeamName:iPlayerTeam = get_member(id, m_iTeam);
 
-    if (!IsTeamCanTakeAWP(iPlayerTeam)) {
+    if (!TeamCanTakeAWP(iPlayerTeam)) {
         iReason = TOO_MANY_AWP_ON_TEAM;
         return false;
     }
@@ -262,7 +262,7 @@ bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED) {
     return true;
 }
 
-bool:IsTeamCanTakeAWP(const TeamName:iTeam) {
+bool:TeamCanTakeAWP(const TeamName:iTeam) {
     switch (g_pCvarValue[LIMIT_TYPE]) {
         case 1:
         {
@@ -725,7 +725,7 @@ public native_awpl_set_low_online(iPlugin, iParams) {
 public native_awpl_can_team_take_awp(iPlugin, iParams) {
     new TeamName:iTeam = TeamName:get_param(1);
 
-    return IsTeamCanTakeAWP(iTeam);
+    return TeamCanTakeAWP(iTeam);
 }
 
 public native_awpl_can_player_take_awp(iPlugin, iParams) {
