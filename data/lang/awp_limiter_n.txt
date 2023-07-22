@@ -8,6 +8,7 @@ CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3too many AWPs in the team^1.
 CHAT_AWP_BECAME_AVALIABLE           = ^1The necessary online ^3is achieved^1, ^3you can take ^4the AWP^1.
 CHAT_COMPENSATION_RIFLE             = ^1You are ^3given ^4a rifle ^3as compensation^1.
 CHAT_COMPENSATION_MONEY             = ^1You ^3have been given compensation ^1in the amount of ^3%i^4$
+CHAT_ROUNDS_PAUSE                   = ^1Wait ^3%i rounds ^1before taking ^4AWP^1 again.
 CVAR_MIN_PLAYERS                    = The minimum number of players at which AWPs will become available
 CVAR_LIMIT_TYPE                     = AWP limit type.^n1 - Exact number of AWPs per team^n2 - Percentage of online players (awpl_percent_players)
 CVAR_MAX_AWP                        = The maximum number of AWPs per team, with awpl_limit_type = 1
@@ -18,6 +19,7 @@ CVAR_SKIP_SPECTATORS                = Skipping spectators when counting online.^
 CVAR_MESSAGE_AWLLOW_AWP             = Send a message that AWP is available again when meeting the required online players?^n0 - Disabled^n1 - Enabled
 CVAR_ROUND_INFINITE                 = Endless round support. (CSDM)^n0 - Disabled^n>= 1 - Check online every N seconds^n-1 - every spawn of any player
 CVAR_GIVE_COMPENSATION              = Issuing compensation for the selected AWP when online is downgraded.^n-1 - AK-47 or M4A1.^n0 - Disabled^n> 1 - Specified amount of money.
+CVAR_ROUNDS_PAUSE                   = How many rounds should a player wait before taking AWP again. ^n0 - Disabled.
 
 [ru]
 CHAT_LOW_ONLINE                     = ^3Недостаточно игроков на сервере, ^1чтобы взять ^4AWP^1. Необходимо: ^4%i^1.
@@ -29,6 +31,7 @@ CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3слишком много AWP в ком�
 CHAT_AWP_BECAME_AVALIABLE           = ^1Необходимый ^3онлайн набран^1, ^3можно брать ^4AWP^1.
 CHAT_COMPENSATION_RIFLE             = ^1Вам ^3выдана ^4винтовка ^1в качестве ^3компенсации^1.
 CHAT_COMPENSATION_MONEY             = ^1Вам ^3выдана компенсация ^1в размере ^3%i^4$
+CHAT_ROUNDS_PAUSE                   = ^1Подождите ^3%i раундов ^1чтобы снова брать ^4AWP^1.
 CVAR_MIN_PLAYERS                    = Минимальное количество игроков, при котором станут доступны AWP
 CVAR_LIMIT_TYPE                     = Тип лимита AWP.^n1 — Точное кол-во AWP на команду^n2 — Процент от онлайн игроков (awpl_percent_players)
 CVAR_MAX_AWP                        = Максимальное кол-во AWP на команду, при awpl_limit_type = 1
@@ -38,7 +41,8 @@ CVAR_SKIP_BOTS                      = Пропуск подсчёта авп у 
 CVAR_SKIP_SPECTATORS                = Пропуск зрителей при подсчёте онлайна.^n0 — Выключен^n1 — Включен
 CVAR_MESSAGE_AWLLOW_AWP             = Отправлять ли сообщение, о том что AWP снова доступна при наборе онлайна?^n0 — Выключено^n1 — Включено
 CVAR_ROUND_INFINITE                 = Поддержка бесконечного раунда. (CSDM)^n0 — Выключено^n>= 1 — Проверять онлайн раз в N секунд^n-1 — каждый спавн любого игрока
-CVAR_GIVE_COMPENSATION              = Выдача компенсации за отобранное AWP при понижении онлайна.^n-1 — AK-47 или M4A1.^n0 — Выключено^n> 1 — Указаное количество денег.
+CVAR_GIVE_COMPENSATION              = Выдача компенсации за отобранное AWP при понижении онлайна.^n-1 — AK-47 или M4A1.^n0 — Выключено^n> 1 — Указаное количество денег
+CVAR_ROUNDS_PAUSE                   = Сколько раундов должен ждать игрок, чтобы снова взять AWP.^n0 — Выключено
 
 [ua]
 CHAT_LOW_ONLINE                     = ^3Недостатньо гравців на сервері, ^1щоб взяти ^4AWP^1. Необхідно: ^4%i^1.
@@ -50,6 +54,7 @@ CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3дуже багато AWP в коман�
 CHAT_AWP_BECAME_AVALIABLE           = ^1Необхідний ^3онланй набрано^1, ^3можна брати ^4AWP^1.
 CHAT_COMPENSATION_RIFLE             = ^1Вам ^3видана ^4гвинтівка ^1в якості ^3компенсації^1.
 CHAT_COMPENSATION_MONEY             = ^1Вам ^3выдана компенсація ^1в розмірі ^3%i^4$
+CHAT_ROUNDS_PAUSE                   = ^1Зачекайте ^3%i раундів ^1перш ніж знову взяти ^4AWP^1.
 CVAR_MIN_PLAYERS                    = Мінімальна кількість гравців, при якій станут доступні AWP
 CVAR_LIMIT_TYPE                     = Тип ліміту AWP.^n1 — Точна кількість AWP на команду^n2 — Процент від онлайну гравців (awpl_percent_players)
 CVAR_MAX_AWP                        = Максимальна кількість AWP на команду, при awpl_limit_type = 1
@@ -60,6 +65,7 @@ CVAR_SKIP_SPECTATORS                = Пропуск зрителей при п�
 CVAR_MESSAGE_AWLLOW_AWP             = Відправляти сообщение, про те, що AWP знову доступна при наборі онлайну?^n0 — Вимкнено^n1 — Ввімкнено
 CVAR_ROUND_INFINITE                 = Підтримка нескінченного раунду. (CSDM)^n0 — Вимкнено^n>= 1 — Перевіряти онлайн раз в N секунд^n-1 — кожен спавн любого гравця
 CVAR_GIVE_COMPENSATION              = Видача компенсації за відібране AWP при знижені онлайну.^n-1 — AK-47 або M4A1.^n0 — Вимкнено^n> 1 — Вказана кількість грошей.
+CVAR_ROUNDS_PAUSE                   = Скільки раундів гравець повинен чекати, перш ніж знову взяти AWP. ^n0 - Вимкнено.
 
 [ro]
 CHAT_LOW_ONLINE                     = ^3Nu sunt destui playeri pe server , ^1pentru a lua ^4AWP^1. Necesari: ^4%i^1.
@@ -71,6 +77,7 @@ CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3prea multe AWP-uri in echipa^1.
 CHAT_AWP_BECAME_AVALIABLE           = ^1Sunt destui ^3jucători online^1, ^3se poate lua ^4AWP^1.
 CHAT_COMPENSATION_RIFLE             = ^1Ti-a fost ^3data ^4o pusca ^3drept compensatie^1.
 CHAT_COMPENSATION_MONEY             = ^1Ti-a fost ^3data compensatie ^1in valoare de ^3%i^4$
+CHAT_ROUNDS_PAUSE                   = ^1Așteptați ^3%i runde ^1înainte de a lua din nou ^4AWP^1.
 CVAR_MIN_PLAYERS                    = Numarul minim de jucatori la care AWP-ul va deveni disponibil
 CVAR_LIMIT_TYPE                     = Tipul limitei AWP.^n1 - Numar exact de AWP pe echipa^n2 - Procentaj al jucatorilor online (awpl_percent_players)
 CVAR_MAX_AWP                        = Numarul maxim de AWP pe echipa, cu awpl_limit_type = 1
@@ -81,6 +88,7 @@ CVAR_SKIP_SPECTATORS                = Ignora spectatorii cand numeri jucatorii o
 CVAR_MESSAGE_AWLLOW_AWP             = Trimite un mesaj ca AWP-ul este disponibil cand se indeplineste numarul necesar de jucatori online?^n0 - Dezactivat^n1 - Activat
 CVAR_ROUND_INFINITE                 = Suport runda infinita. (CSDM)^n0 - Dezactivat^n>= 1 - Verifica nr. jucatorilor online la fiecare N secunde^n-1 - la fiecare spawn al fiecarui jucator
 CVAR_GIVE_COMPENSATION              = Atribuire compensatie pentru AWP atunci cand numarul jucatorilor online scade.^n-1 - AK-47 sau M4A1.^n0 - Dezactivat^n> 1 - Specifica valoare bani.
+CVAR_ROUNDS_PAUSE                   = Câte runde ar trebui să aștepte un jucător înainte de a lua din nou AWP. ^n0 - Dezactivat.
 
 [de]
 CHAT_LOW_ONLINE                     = ^3Nicht genug Spieler um ^1^4AWP^1 zu verwenden. Als Minimum werden ^4%i^1 Spieler benötigt. 
@@ -92,6 +100,7 @@ CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3Zu viele Spieler in deinem Team nutzen b
 CHAT_AWP_BECAME_AVALIABLE           = ^1Aufgrund der derzeitigen ^3Spieleranzahl^1 ^3darf ^4AWP^1 genutzt werden.
 CHAT_COMPENSATION_RIFLE             = ^1Du ^3hast eine ^3%i^4$ als Entschädigung ^1erhalten.
 CHAT_COMPENSATION_MONEY             = Du hast ^3%i^4$ als eine Entschädigung erhalten.
+CHAT_ROUNDS_PAUSE                   = ^1Warte ^3%i Runden ^1bevor du wieder ^4AWP^1 nimmst.
 CVAR_MIN_PLAYERS                    = Die Mindestanzahl an Spielern, ab der AWPs verfügbar sind
 CVAR_LIMIT_TYPE                     = AWP-Limittyp.^n1 – Genaue Anzahl von AWPs pro Team^n2 – Prozentsatz der Online-Spieler (awpl_percent_players)
 CVAR_MAX_AWP                        = Die maximale Anzahl von AWPs pro Team, mit awpl_limit_type = 1
@@ -102,6 +111,7 @@ CVAR_SKIP_SPECTATORS                = Zuschauer bei Online-Spieleranzahl übersp
 CVAR_MESSAGE_AWLLOW_AWP             = Sollen die Spieler darüber informiert werden, dass die AWP wieder verfügbar ist? 
 CVAR_ROUND_INFINITE                 = Unterstützung endloser Runden. (CSDM)^n0 - Deaktiviert^n>= 1 - Alle N Sekunden online prüfen^n-1 - auf dem Spawn jedes Spielers
 CVAR_GIVE_COMPENSATION              = Entschädigung für vorhandene AWP, wenn nicht mehr genug Spieler vorhanden sind.^n-1 - AK-47 oder M4A1.^n0 - Deaktiviert^n> 1 - Angegebener Geldbetrag.
+CVAR_ROUNDS_PAUSE                   = Wie viele Runden sollte ein Spieler warten, bevor er wieder AWP nimmt. ^n0 - Deaktiviert.
 
 [cn]
 CHAT_LOW_ONLINE                     = ^3服务器人数不足 , ^1禁止使用 ^4AWP^1. 需要: ^4%i^1.
@@ -112,6 +122,7 @@ CHAT_REASON_LOW_ONLINE              = ^3在线状态过低^1.
 CHAT_REASON_TOO_MANY_AWP_PER_TEAM   = ^3团队中AWP数量太多了^1.
 CHAT_COMPENSATION_RIFLE             = ^1你 ^3获得了 ^4一把步枪 ^3作为补偿^1.
 CHAT_COMPENSATION_MONEY             = ^1你获得了^3%i^4$ ^1作为补偿
+CHAT_ROUNDS_PAUSE                   = ^1等待 ^3%i 回合 ^1再拿 ^4AWP^1。
 CVAR_MIN_PLAYERS                    = 允许使用AWP的最小玩家数
 CVAR_LIMIT_TYPE                     = AWP 限制类型.^n1 - 每个团队使用的数量^n2 - 在线玩家百分比 (awpl_percent_players)
 CVAR_MAX_AWP                        = 每个团队最大AWP数, with awpl_limit_type = 1
@@ -122,3 +133,4 @@ CVAR_SKIP_SPECTATORS                = 在线人数是否计算观察者.^n0 - �
 CVAR_MESSAGE_AWLLOW_AWP             = 在满足所需在线玩家时再次发送AWP可用的消息^n0-禁用^n1-启用
 CVAR_ROUND_INFINITE                 = 无限复活模式. (CSDM)^n0 - 禁用^n>= 1 - 每多少秒检查一次^n-1 - 每个玩家重生
 CVAR_GIVE_COMPENSATION              = 在线人数不足时，使用AWP发放的补偿.^n-1 - AK-47 或M4A1.^n0 - 禁用^n> 1 - 指定补偿的金钱.
+CVAR_ROUNDS_PAUSE                   = 玩家在再次拿起AWP之前应等待多少回合。 ^n0 - 禁用。
