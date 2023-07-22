@@ -413,18 +413,22 @@ public RG_RestartRound_post() {
 
     new bool:bCompleteReset = get_member_game(m_bCompleteReset);
 
+    if (bCompleteReset) {
+        debug_log(__LINE__, "Complete reset. Trie cleared.");
+        TrieClear(g_iSaveRoundsRemaining);
+    }
+
     for (new id = 1; id <= MaxClients; id++) {
+        if (bCompleteReset) {
+            g_bPauseRoundsRemaining[id] = 0;
+            continue;
+        }
+
         if (!is_user_alive(id)) {
             continue;
         }
 
         if (g_pCvarValue[SKIP_BOTS] && is_user_bot(id)) {
-            continue;
-        }
-
-        if (bCompleteReset) {
-            g_bPauseRoundsRemaining[id] = 0;
-            TrieClear(g_iSaveRoundsRemaining);
             continue;
         }
 
@@ -437,7 +441,11 @@ public RG_RestartRound_post() {
             g_bPauseRoundsRemaining[id] = g_pCvarValue[CVAR_ROUNDS_PAUSE];
         } else if (g_bPauseRoundsRemaining[id] > 0) {
             g_bPauseRoundsRemaining[id]--;
+        } else {
+            continue; // just for debug_log
         }
+
+        debug_log(__LINE__, "g_bPauseRoundsRemaining is %i for <%n>", g_bPauseRoundsRemaining[id]);
     }
 
     debug_log(__LINE__, "Now it's [ %i ] AWP in CT team & [ %i ] AWP in TE team.", g_iAWPAmount[TEAM_CT], g_iAWPAmount[TEAM_TERRORIST]);
@@ -471,8 +479,6 @@ public CheckOnline() {
         if (!g_bIsLowOnline) {
             SetLowOnlineMode();
         }
-
-        return;
     } else {
         if (g_bIsLowOnline) {
             UnsetLowOnlineMode();
