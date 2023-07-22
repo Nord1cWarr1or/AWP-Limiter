@@ -8,12 +8,6 @@ new const PLUGIN_VERSION[] = "1.3.1 Beta";
 
 #pragma semicolon 1
 
-// Based on code by: Kaido Ren, Garey
-#define FOREACHPLAYER(%0,%1,%2,%3) new __players[MAX_PLAYERS], %0, %1; \
-    %1 *= 1; \
-    get_players_ex(__players, %0, %2, %3); \
-    for (new i, %1 = __players[i]; i < %0; %1 = __players[i++])
-
 #define GetCvarDesc(%0) fmt("%L", LANG_SERVER, %0)
 
 #if !defined MAX_MAPNAME_LENGTH
@@ -34,7 +28,8 @@ enum _:Cvars {
     SKIP_SPECTATORS,
     MESSAGE_ALLOWED_AWP,
     ROUND_INFINITE,
-    GIVE_COMPENSATION
+    GIVE_COMPENSATION,
+    CVAR_ROUNDS_PAUSE
 };
 
 new g_pCvarValue[Cvars];
@@ -58,8 +53,9 @@ new HookChain:g_iHookChain_PlayerSpawn;
 new g_bitImmunityFlags;
 new g_iNumAllowedAWP;
 new g_iOnlinePlayers;
-
 new bool:IsUserBot[MAX_PLAYERS + 1];
+new g_bPauseRoundsRemaining[MAX_PLAYERS + 1];
+new Trie:g_iSaveRoundsRemaining;
 
 /* <== DEBUG ==> */
 
@@ -78,6 +74,7 @@ public plugin_init() {
     RegisterHookChain(RG_CBasePlayer_AddPlayerItem,         "RG_CBasePlayer_AddPlayerItem_post",        .post = true);
     RegisterHookChain(RG_CSGameRules_RestartRound,          "RG_RestartRound_post",                     .post = true);
     RegisterHookChain(RG_CBasePlayer_RemovePlayerItem,      "RG_CBasePlayer_RemovePlayerItem_post",     .post = true);
+    RegisterHookChain(RG_CBasePlayer_Killed,                "RG_CBasePlayer_Killed_pre",                .post = false);
 
     g_iHookChain_RoundEnd = RegisterHookChain(RG_RoundEnd,              "RG_RoundEnd_post",             .post = true);
     g_iHookChain_PlayerSpawn = RegisterHookChain(RG_CBasePlayer_Spawn,  "RG_CBasePlayer_Spawn_post",    .post = true);
@@ -106,6 +103,8 @@ public plugin_init() {
         pause("ad");
         return;
     }
+
+    g_iSaveRoundsRemaining = TrieCreate();
 
     /* <== DEBUG ==> */
 
@@ -259,6 +258,11 @@ bool:PlayerCanTakeAWP(const id, &AwpRestrictionType:iReason = AWP_ALLOWED) {
         return false;
     }
 
+    if (g_pCvarValue[CVAR_ROUNDS_PAUSE] > 0 && g_bPauseRoundsRemaining[id] > 0) {
+        iReason = ROUNDS_PAUSE;
+        return false;
+    }
+
     return true;
 }
 
@@ -287,6 +291,7 @@ SendReasonToPlayer(id, AwpRestrictionType:iReason) {
     switch (iReason) {
         case LOW_ONLINE: client_print_color(id, print_team_red, "%s %l %s", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_LOW_ONLINE", g_pCvarValue[MIN_PLAYERS], g_pCvarValue[SKIP_SPECTATORS] ? fmt("%l", "CHAT_WITHOUT_SPECTATORS") : "");
         case TOO_MANY_AWP_ON_TEAM: client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_TOO_MANY_AWP_PER_TEAM", g_pCvarValue[LIMIT_TYPE] == 1 ? g_pCvarValue[MAX_AWP] : g_iNumAllowedAWP);
+        case ROUNDS_PAUSE: client_print_color(id, print_team_red, "%s %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_ROUNDS_PAUSE", g_pCvarValue[CVAR_ROUNDS_PAUSE]);
     }
 }
 
@@ -318,11 +323,16 @@ public client_disconnected(id) {
         return;
     }
 
+    debug_log(__LINE__, "<client_disconnected> called. Player: <%n>", id);
+
+    new szAuthID[MAX_AUTHID_LENGTH];
+    get_user_authid(id, szAuthID, charsmax(szAuthID));
+
+    TrieSetCell(g_iSaveRoundsRemaining, szAuthID, g_bPauseRoundsRemaining[id]);
+
     if (!user_has_awp(id)) {
         return;
     }
-
-    debug_log(__LINE__, "<client_disconnected> called. Player: <%n>", id);
 
     if (IsUserBot[id]) {
         IsUserBot[id] = false;
@@ -337,7 +347,7 @@ public client_disconnected(id) {
 
     g_iAWPAmount[iUserTeam]--;
 
-    debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
+    debug_log(__LINE__, "(-) Player has AWP. Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
 public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem) {
@@ -363,10 +373,37 @@ public RG_CBasePlayer_RemovePlayerItem_post(const id, const pItem) {
     debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
 }
 
+public RG_CBasePlayer_Killed_pre(const id, pevAttacker, iGib) {
+    if (g_pCvarValue[CVAR_ROUNDS_PAUSE] == 0) {
+        return;
+    }
+
+    if (g_bIsLowOnline) {
+        return;
+    }
+
+    if (!user_has_awp(id)) {
+        return;
+    }
+
+    if (g_bPauseRoundsRemaining[id] > 0) {
+        return;
+    }
+
+    g_bPauseRoundsRemaining[id] = -1;
+
+    debug_log(__LINE__, "<PlayerKilled> called. Player: <%n>. Set g_bPauseRoundsRemaining to -1", id);
+}
+
 public client_putinserver(id) {
     if (is_user_bot(id)) {
         IsUserBot[id] = true;
     }
+
+    new szAuthID[MAX_AUTHID_LENGTH];
+    get_user_authid(id, szAuthID, charsmax(szAuthID));
+
+    TrieGetCell(g_iSaveRoundsRemaining, szAuthID, g_bPauseRoundsRemaining[id]);
 }
 
 public RG_RestartRound_post() {
@@ -374,14 +411,32 @@ public RG_RestartRound_post() {
 
     debug_log(__LINE__, "--> New round has started. <--");
 
-    if (g_bIsLowOnline) {
-        debug_log(__LINE__, "Low online mode is now active. AWP count is skipped.");
-        return;
-    }
+    new bool:bCompleteReset = get_member_game(m_bCompleteReset);
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead), "") {
+    for (new id = 1; id <= MaxClients; id++) {
+        if (!is_user_alive(id)) {
+            continue;
+        }
+
+        if (g_pCvarValue[SKIP_BOTS] && is_user_bot(id)) {
+            continue;
+        }
+
+        if (bCompleteReset) {
+            g_bPauseRoundsRemaining[id] = 0;
+            TrieClear(g_iSaveRoundsRemaining);
+            continue;
+        }
+
         if (user_has_awp(id)) {
             g_iAWPAmount[get_member(id, m_iTeam)]++;
+            continue;
+        }
+
+        if (g_bPauseRoundsRemaining[id] == -1) {
+            g_bPauseRoundsRemaining[id] = g_pCvarValue[CVAR_ROUNDS_PAUSE];
+        } else if (g_bPauseRoundsRemaining[id] > 0) {
+            g_bPauseRoundsRemaining[id]--;
         }
     }
 
@@ -473,9 +528,18 @@ UnsetLowOnlineMode() {
 
 CheckTeamLimit() {
     switch (g_pCvarValue[LIMIT_TYPE]) {
-        case 1: debug_log(__LINE__, "Limit type: 1. Max AWP per team: %i", g_pCvarValue[MAX_AWP]);
-        case 2:
-        {
+        case 1: {
+            debug_log(__LINE__, "Limit type: 1. Max AWP per team: %i", g_pCvarValue[MAX_AWP]);
+
+            if (g_iAWPAmount[TEAM_TERRORIST] > g_pCvarValue[MAX_AWP]) {
+                TakeAwpsFromTeam(TEAM_TERRORIST);
+            }
+
+            if (g_iAWPAmount[TEAM_CT] > g_pCvarValue[MAX_AWP]) {
+                TakeAwpsFromTeam(TEAM_CT);
+            }
+        }
+        case 2: {
             g_iNumAllowedAWP = floatround(g_iOnlinePlayers * (g_pCvarValue[PERCENT_PLAYERS] / 100.0), floatround_floor);
 
             debug_log(__LINE__, "Limit type: 2. Cvar percent: %i, calculated num of max AWP per team: %i", g_pCvarValue[PERCENT_PLAYERS], g_iNumAllowedAWP);
@@ -500,51 +564,81 @@ CheckTeamLimit() {
 TakeAllAwps() {
     new TeamName:iUserTeam;
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead), "") {
-        if (user_has_awp(id)) {
-            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
-
-            if (g_iReturn == AWPL_BREAK) {
-                debug_log(__LINE__, "AWP is not taken from player because of API.");
-                continue;
-            }
-
-            rg_remove_item(id, "weapon_awp");
-
-            iUserTeam = get_member(id, m_iTeam);
-
-            g_iAWPAmount[iUserTeam]--;
-
-            client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_LOW_ONLINE");
-
-            GiveCompensation(id);
-
-            debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
+    for (new id = 1; id <= MaxClients; id++) {
+        if (!is_user_alive(id)) {
+            continue;
         }
+
+        if (g_pCvarValue[SKIP_BOTS] && is_user_bot(id)) {
+            continue;
+        }
+
+        if (!user_has_awp(id)) {
+            continue;
+        }
+
+        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, LOW_ONLINE);
+
+        if (g_iReturn == AWPL_BREAK) {
+            debug_log(__LINE__, "AWP is not taken from player because of API.");
+            continue;
+        }
+
+        rg_remove_item(id, "weapon_awp");
+
+        iUserTeam = get_member(id, m_iTeam);
+
+        g_iAWPAmount[iUserTeam]--;
+
+        client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_LOW_ONLINE");
+
+        GiveCompensation(id);
+
+        debug_log(__LINE__, "(-) Now it's [ %i ] AWP in %i team", g_iAWPAmount[iUserTeam], iUserTeam);
     }
 }
 
 TakeAwpsFromTeam(TeamName:iTeam) {
     debug_log(__LINE__, "<TakeAwpsFromTeam> called for %i team.", iTeam);
 
-    FOREACHPLAYER(iPlayers, id, g_pCvarValue[SKIP_BOTS] ? (GetPlayers_ExcludeBots | GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead | GetPlayers_MatchTeam) : (GetPlayers_ExcludeHLTV | GetPlayers_ExcludeDead | GetPlayers_MatchTeam), iTeam == TEAM_TERRORIST ? "TERRORIST" : "CT") {
-        if (user_has_awp(id)) {
-            ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+    new iPlayers[MAX_PLAYERS], iPlayersNum;
+    new GetPlayersFlags:iGetPlayersFlags = (GetPlayers_ExcludeDead | GetPlayers_ExcludeHLTV);
 
-            if (g_iReturn == AWPL_BREAK) {
-                debug_log(__LINE__, "AWP is not taken from player because of API.");
-                continue;
-            }
+    if (g_pCvarValue[SKIP_BOTS]) {
+        iGetPlayersFlags |= GetPlayers_ExcludeBots;
+    }
 
-            rg_remove_item(id, "weapon_awp");
+    get_players_ex(iPlayers, iPlayersNum, iGetPlayersFlags);
+    SortIntegers(iPlayers, sizeof iPlayers, Sort_Random);
 
-            client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_TOO_MANY_AWP_PER_TEAM");
+    for (new i, id; i <= MAX_PLAYERS; i++) {
+        id = iPlayers[i];
 
-            GiveCompensation(id);
+        if (!id) {
+            continue;
+        }
 
-            if (g_iAWPAmount[iTeam] <= g_iNumAllowedAWP) {
-                break;
-            }
+        if (!user_has_awp(id)) {
+            continue;
+        }
+
+        ExecuteForward(g_iForwardsPointers[AWP_TAKEN_FROM_PLAYER], g_iReturn, id, TOO_MANY_AWP_ON_TEAM);
+
+        if (g_iReturn == AWPL_BREAK) {
+            debug_log(__LINE__, "AWP is not taken from player because of API.");
+            continue;
+        }
+
+        rg_remove_item(id, "weapon_awp");
+
+        client_print_color(id, print_team_red, "%s %l %l", g_pCvarValue[PLUGIN_CHAT_PREFIX], "CHAT_AWP_TAKEN_AWAY", "CHAT_REASON_TOO_MANY_AWP_PER_TEAM");
+
+        GiveCompensation(id);
+
+        if (g_pCvarValue[LIMIT_TYPE] == 1 && g_iAWPAmount[iTeam] <= g_pCvarValue[MAX_AWP]) {
+            break;
+        } else if (g_pCvarValue[LIMIT_TYPE] == 2 && g_iAWPAmount[iTeam] <= g_iNumAllowedAWP) {
+            break;
         }
     }
 }
@@ -644,6 +738,11 @@ CreateCvars() {
         .description = GetCvarDesc("CVAR_GIVE_COMPENSATION"),
         .has_min = true, .min_val = -1.0),
     g_pCvarValue[GIVE_COMPENSATION]);
+
+    bind_pcvar_num(create_cvar("awpl_rounds_pause_num", "0",
+        .description = GetCvarDesc("CVAR_ROUNDS_PAUSE"),
+        .has_min = true, .min_val = 0.0),
+    g_pCvarValue[CVAR_ROUNDS_PAUSE]);
 }
 
 public OnChangeCvar_RoundInfinite(pCvar, const szOldValue[], const szNewValue[]) {
